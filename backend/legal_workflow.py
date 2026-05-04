@@ -651,6 +651,19 @@ async def confirm_deposit_payment(
             },
         )
 
+    await _audit(
+        event_type="deposit_paid_confirmed", entity_type="legal_deposit",
+        entity_id=deposit_id, user=user,
+        deal_id=d.get("deal_id"), customer_id=d.get("customer_id"),
+        payload={
+            "paid_amount_eur": paid,
+            "required_amount_eur": required,
+            "bank_received_at": bank_at,
+            "search_timer_deadline_at": deadline.isoformat(),
+            "fx_rate_usd_to_eur": d.get("fx_rate_usd_to_eur"),
+            "note": payload.note,
+        },
+    )
     return {"success": True, "deposit_id": deposit_id, "status": "paid_confirmed",
             "search_timer_deadline_at": deadline.isoformat()}
 
@@ -681,6 +694,12 @@ async def request_deposit_forfeit(
                                   "by": user.get("email") or user.get("id"),
                                   "data": {"reason": body.get("reason")}}}},
     )
+    await _audit(
+        event_type="deposit_forfeit_requested", entity_type="legal_deposit",
+        entity_id=deposit_id, user=user,
+        deal_id=d.get("deal_id"), customer_id=d.get("customer_id"),
+        payload={"reason": body.get("reason"), "from_status": "paid_confirmed"},
+    )
     return {"success": True, "deposit_id": deposit_id, "status": "forfeit_pending_teamlead"}
 
 
@@ -704,6 +723,12 @@ async def teamlead_approve_forfeit(
          "$push": {"history": {"event": "teamlead_approved_forfeit", "at": now,
                                "by": user.get("email") or user.get("id"), "data": None}}},
     )
+    await _audit(
+        event_type="deposit_forfeit_teamlead_approved", entity_type="legal_deposit",
+        entity_id=deposit_id, user=user,
+        deal_id=d.get("deal_id"), customer_id=d.get("customer_id"),
+        payload={"prev_status": "forfeit_pending_teamlead"},
+    )
     return {"success": True, "deposit_id": deposit_id, "status": "forfeit_pending_admin"}
 
 
@@ -726,6 +751,12 @@ async def admin_finalize_forfeit(
                   "admin_finalized_at": now, "updated_at": now},
          "$push": {"history": {"event": "forfeited", "at": now,
                                "by": user.get("email") or user.get("id"), "data": None}}},
+    )
+    await _audit(
+        event_type="deposit_forfeited", entity_type="legal_deposit",
+        entity_id=deposit_id, user=user,
+        deal_id=d.get("deal_id"), customer_id=d.get("customer_id"),
+        payload={"paid_amount_eur": float(d.get("paid_amount_eur") or 0)},
     )
     return {"success": True, "deposit_id": deposit_id, "status": "forfeited"}
 
@@ -833,6 +864,13 @@ async def request_deposit_refund(
         "customerId": d.get("customer_id"), "kind": "voluntary",
         "reason": body.reason, "by": user.get("email") or user.get("id"),
     })
+    await _audit(
+        event_type="deposit_refund_requested_voluntary", entity_type="legal_deposit",
+        entity_id=deposit_id, user=user,
+        deal_id=d.get("deal_id"), customer_id=d.get("customer_id"),
+        payload={"reason": body.reason, "note": body.note,
+                 "paid_amount_eur": float(d.get("paid_amount_eur") or 0)},
+    )
     return {"success": True, "deposit_id": deposit_id, "status": "refund_pending_voluntary"}
 
 
@@ -915,6 +953,12 @@ async def reject_deposit_refund(
         "reason": body.reason,
         "by": user.get("email") or user.get("id"),
     })
+    await _audit(
+        event_type="deposit_refund_rejected", entity_type="legal_deposit",
+        entity_id=deposit_id, user=user,
+        deal_id=d.get("deal_id"), customer_id=d.get("customer_id"),
+        payload={"reason": body.reason, "rolled_back_to": "paid_confirmed"},
+    )
     return {"success": True, "deposit_id": deposit_id, "status": "paid_confirmed", "reason": body.reason}
 
 
@@ -1189,6 +1233,13 @@ async def create_contract_v2(
             }
         await db.deals.update_one({"$or": [{"id": payload.deal_id}, {"_id": payload.deal_id}]}, update)
 
+    await _audit(
+        event_type="contract_created", entity_type="contract_v2",
+        entity_id=contract_id, user=user,
+        deal_id=payload.deal_id, customer_id=payload.customer_id,
+        payload={"type": payload.type, "lifecycle": "draft",
+                 "items_count": len(payload.items or [])},
+    )
     return {"success": True, "contract": contract}
 
 
@@ -1347,6 +1398,12 @@ async def upload_signed_pdf(
          "$push": {"history": {"event": "signed_pdf_uploaded", "at": now,
                                "by": user.get("email") or user.get("id"),
                                "data": {"url": url, "size_bytes": len(body)}}}},
+    )
+    await _audit(
+        event_type="contract_signed_pdf_uploaded", entity_type="contract_v2",
+        entity_id=contract_id, user=user,
+        deal_id=c.get("deal_id"), customer_id=c.get("customer_id"),
+        payload={"url": url, "size_bytes": len(body), "type": c.get("type")},
     )
     return {"success": True, "contract_id": contract_id, "signed_pdf_url": url}
 
@@ -1770,6 +1827,70 @@ async def mark_auction_won(
         "deposit_applied_eur": round(deposit_eur, 2),
         "is_locked_after_win": True,
     }
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#   7.  AUDIT TRAIL READ API (P1.3.1)
+# ════════════════════════════════════════════════════════════════════════════
+#
+#   Public read endpoints для бухгалтерии, юр.отдела и менеджеров.
+#   Запись в audit_events НЕ выполняется через API — только через _audit()
+#   из доменных endpoints. Это append-only: ни PUT, ни DELETE здесь нет.
+#
+
+@router.get("/legal/audit", dependencies=[Depends(require_manager_or_admin)])
+async def list_audit_events(
+    deal_id: Optional[str] = None,
+    customer_id: Optional[str] = None,
+    entity_type: Optional[str] = None,
+    entity_id: Optional[str] = None,
+    type: Optional[str] = None,
+    user_email: Optional[str] = None,
+    limit: int = 100,
+):
+    """
+    Прочитать audit_events с фильтрами. Сортировка: новые сверху.
+    Все параметры опциональны — без фильтров возвращает последние `limit` событий.
+    Защита: только manager/admin/master_admin.
+    """
+    db = _db()
+    q: Dict[str, Any] = {}
+    if deal_id:
+        q["deal_id"] = deal_id
+    if customer_id:
+        q["customer_id"] = customer_id
+    if entity_type:
+        q["entity_type"] = entity_type
+    if entity_id:
+        q["entity_id"] = entity_id
+    if type:
+        q["type"] = type
+    if user_email:
+        q["user_email"] = user_email
+
+    limit = max(1, min(limit, 500))
+    cursor = db.audit_events.find(q, {"_id": 0}).sort("ts", -1).limit(limit)
+    items = await cursor.to_list(length=limit)
+    # Сериализуем datetime ts -> isoformat (чтобы JSON не падал)
+    for it in items:
+        ts = it.get("ts")
+        if isinstance(ts, datetime):
+            it["ts"] = ts.isoformat()
+    return {"success": True, "data": items, "total": len(items), "filters": q}
+
+
+@router.get("/legal/deals/{deal_id}/audit", dependencies=[Depends(require_manager_or_admin)])
+async def get_deal_audit_trail(deal_id: str, limit: int = 200):
+    """Полный audit-trail по конкретной сделке (timeline для UI)."""
+    db = _db()
+    limit = max(1, min(limit, 500))
+    cursor = db.audit_events.find({"deal_id": deal_id}, {"_id": 0}).sort("ts", -1).limit(limit)
+    items = await cursor.to_list(length=limit)
+    for it in items:
+        ts = it.get("ts")
+        if isinstance(ts, datetime):
+            it["ts"] = ts.isoformat()
+    return {"success": True, "deal_id": deal_id, "data": items, "total": len(items)}
 
 
 # ════════════════════════════════════════════════════════════════════════════

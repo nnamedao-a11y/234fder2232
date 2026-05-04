@@ -1919,6 +1919,18 @@ async def startup():
     except Exception as e:
         logger.warning(f"[STARTUP] refund cron init failed: {e}")
 
+    # ─── P1.3.1 Audit indexes ─────────────────────────────────────────
+    try:
+        await db.audit_events.create_index([("ts", -1)])
+        await db.audit_events.create_index([("deal_id", 1), ("ts", -1)])
+        await db.audit_events.create_index([("customer_id", 1), ("ts", -1)])
+        await db.audit_events.create_index([("entity_type", 1), ("entity_id", 1), ("ts", -1)])
+        await db.audit_events.create_index([("type", 1), ("ts", -1)])
+        await db.audit_events.create_index([("id", 1)], unique=True, sparse=True)
+        logger.info("[STARTUP] ✓ audit_events indexes ensured")
+    except Exception as e:
+        logger.warning(f"[STARTUP] audit_events indexes failed: {e}")
+
 
 async def _seed_staff_from_env():
     """Seed/refresh staff accounts on every startup — deployment-resilient.

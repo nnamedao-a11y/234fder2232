@@ -66,3 +66,47 @@
 - /api/admin/metrics arithmetic (conversion 0.5, avg_order_time 3.49h)
 
 All 6 blocks green on last run.
+
+---
+
+## Phase — P1.3.1 Hardening (DONE — May 2026)
+
+Goal: дожать архитектуру `auction_won` до production-grade прежде чем
+расширять invoice templates. Пять инвариантов, без которых нельзя в прод.
+
+### What was hardened
+
+| # | Инвариант | Как реализовано |
+|---|-----------|-----------------|
+| 1 | **Atomic CAS lock** против race conditions | `auction_locked` + CAS update_one в `mark_auction_won` (line 1538-1571 `legal_workflow.py`). Только ОДИН concurrent caller проходит, остальные → idempotent ответ. |
+| 2 | **`is_locked_after_win` freeze** | Guard `_ensure_deal_not_locked_after_win()` в: `POST /legal/deposits` (create), `PUT /legal/deposits/{id}/confirm-payment`. После auction_won любая попытка → HTTP 409. |
+| 3 | **`fx_rate_snapshot`** в 4 местах | Записывается атомарно в: `deal.fx_rate_snapshot`, `deal.auction.fx_rate_snapshot`, `contract_v2.fx_rate_snapshot`, `invoice.fx_rate_snapshot`. **Никогда не пересчитывается.** |
+| 4 | **deposit ↔ invoice hard link** | `invoice.deposit_id`, `invoice.deposit_applied_eur`, `invoice.linked_contract_id` + обратный `deposit.applied_to_invoice_id` (двусторонняя связь для бухгалтерии). |
+| 5 | **Append-only audit_events** | Коллекция `db.audit_events` + `_audit()` helper. События: `deposit_created`, `deposit_paid_confirmed`, `deposit_forfeit_requested/teamlead_approved/forfeited`, `deposit_refund_requested_voluntary/approved/rejected/refunded`, `contract_created`, `contract_transition`, `contract_signed_pdf_uploaded`, `auction_won`. Каждое — с user_id, user_email, role, payload, ts. |
+
+### New endpoints
+| Method | Path | Что |
+|---|---|---|
+| GET | `/api/legal/audit?deal_id=&customer_id=&type=&...` | фильтрованный read с пагинацией (limit ≤ 500) |
+| GET | `/api/legal/deals/{deal_id}/audit` | timeline по сделке для UI |
+
+### MongoDB indexes (P1.3.1)
+Создаются на startup (`server.py` `_seed_staff_from_env` neighbour):
+- `audit_events.ts` (-1)
+- `audit_events.(deal_id, ts)`, `(customer_id, ts)`, `(entity_type, entity_id, ts)`, `(type, ts)`
+- `audit_events.id` (unique sparse)
+
+### Test coverage (E2E POC)
+`/app/backend/test_p131_hardening_e2e.py` — 6 test groups, 34 assertions, **all green**:
+1. CAS lock — 5 concurrent /auction/won → exactly 1 contract+invoice
+2. Post-win freeze — create-deposit on locked deal → 409 with proper message
+3. FX snapshot — 0.87 (custom rate) persists in 4 places + response
+4. Deposit↔invoice link — bidirectional verified, `Deposit applied` line item present
+5. Audit events — 3 event types via API + filter + per-deal endpoint
+6. Idempotent replay — second `/auction/won` returns same IDs, exactly 1 audit event
+
+### NOT built (deliberately deferred)
+- ❌ Invoice templates DB collection (`invoice_templates`) — следующий шаг (P1.2)
+- ❌ Final settlement package (customs + VAT + transport BG + adjustments) — P1.2
+- ❌ Audit UI на фронте — backend готов, фронт в P1.2
+

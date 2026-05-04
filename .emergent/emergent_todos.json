@@ -1,30 +1,22 @@
 [
   {
-    "content": "1. Atomic CAS lock on auction_won (auction_locked) — prevents double-creation under race",
-    "status": "in_progress"
+    "content": "Добавить _audit calls во все недостающие endpoints",
+    "status": "completed"
   },
   {
-    "content": "2. is_locked_after_win flag + _ensure_not_locked() guard on create_deposit, confirm_payment, edit endpoints",
-    "status": "pending"
+    "content": "Добавить MongoDB indexes на audit_events",
+    "status": "completed"
   },
   {
-    "content": "3. FX snapshot (fx_rate_snapshot) explicit on deal/contract/invoice",
-    "status": "pending"
+    "content": "Создать GET /api/legal/audit + /api/legal/deals/{id}/audit",
+    "status": "completed"
   },
   {
-    "content": "4. Deposit→Invoice hard link (invoice.deposit_id, invoice.deposit_applied_eur)",
-    "status": "pending"
+    "content": "Написать и прогнать E2E POC тест P1.3.1 — 34/34 passed",
+    "status": "completed"
   },
   {
-    "content": "5. Audit log collection (audit_events) + _audit() helper, wired into auction_won + deposit + contract events",
-    "status": "pending"
-  },
-  {
-    "content": "Tests: extend test_p13_auction.py with 5 hardening scenarios (race-lock, post-win lock, fx persistence, deposit linkage, audit trail)",
-    "status": "pending"
-  },
-  {
-    "content": "Run all tests + verify no regression on P1.1",
-    "status": "pending"
+    "content": "Обновить memory/PRD.md с результатами P1.3.1",
+    "status": "completed"
   }
 ]
