@@ -1,0 +1,64 @@
+{
+  "summary": "Provider Pressure + Business Metrics testing completed. Backend APIs working correctly (87.5% pass rate). Frontend pages accessible but Playwright automation encountered browser issues during login flow.",
+  "backend_issues": {
+    "minor_bugs": [
+      {
+        "endpoint": "POST /api/admin/providers/stats/recompute?provider_id=xxx",
+        "issue": "Returns {success: true, stats: {...}} instead of {count: 1, providers: [...]} format",
+        "impact": "Response format inconsistency - doesn't match bulk recompute endpoint format",
+        "fix_priority": "LOW",
+        "workaround": "Frontend can handle both formats or use the stats object directly"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "testing_issues": [
+      {
+        "component": "Login flow",
+        "issue": "Playwright browser automation stuck at 'Loading...' state during login - API call returns ERR_ABORTED in browser",
+        "affected_pages": ["/admin/login"],
+        "fix_priority": "MEDIUM",
+        "note": "Backend API works correctly (verified via curl and Python requests). Issue appears to be browser-specific or CORS-related in Playwright context."
+      }
+    ],
+    "untested_due_to_login_issue": [
+      {
+        "pages": ["/admin/business-metrics", "/admin/provider-health"],
+        "reason": "Could not complete login flow in Playwright to access authenticated pages",
+        "manual_verification": "Pages are accessible (HTTP 200) and backend APIs return correct data"
+      }
+    ]
+  },
+  "passed_tests": [
+    "✅ GET /api/system/health - returns {status: 'healthy'}",
+    "✅ POST /api/auth/login - returns JWT token with correct credentials",
+    "✅ GET /api/admin/metrics - returns 3 metrics (conversion, avg_order_time, repeat_rate) with correct structure",
+    "✅ GET /api/providers/me/stats - returns current user's provider stats (score, tier, metrics)",
+    "✅ GET /api/admin/providers/stats - returns list of providers sorted by score desc with enriched data (providerName, providerEmail)",
+    "✅ POST /api/admin/providers/stats/recompute - recomputes all providers and returns count",
+    "✅ GET /api/providers/{provider_id}/stats - returns specific provider's stats",
+    "✅ Backend smoke test script (/app/backend/test_provider_pressure.py) passes all 6 checks per main agent's note"
+  ],
+  "test_report_links": [
+    "/app/backend/backend_test_provider_pressure.py",
+    "/app/backend/test_provider_pressure.py"
+  ],
+  "success_percentage": {
+    "backend": "87.5% (7/8 tests passed)",
+    "frontend": "Unable to complete due to Playwright login issue",
+    "overall": "Backend fully functional, frontend pages exist and are accessible"
+  },
+  "updated_files": [
+    "/app/backend/backend_test_provider_pressure.py"
+  ],
+  "action_item_for_main_agent": "1. Review single provider recompute endpoint response format for consistency with bulk recompute. 2. Investigate Playwright/browser login issue (ERR_ABORTED on /api/auth/login) - may be CORS, CSP, or Cloudflare-related. Backend API works correctly via curl/requests. 3. Verify frontend pages render correctly: /admin/business-metrics should show 3 metric cards (Конверсія рахунків, Середній час виконання, Повторність клієнтів) with refresh button. /admin/provider-health should show tier distribution (5 badges) and providers table with recompute button. 4. Verify sidebar 'Control' group contains 'Бізнес-метрики' and 'Provider Pressure' menu items (admin role only).",
+  "should_call_test_agent_after_fix": "false",
+  "should_main_agent_test_itself": "true",
+  "notes": {
+    "backend_functionality": "All Provider Pressure APIs are working correctly. The engine computes score/tier based on response time, completion rate, and activity. Tier thresholds match spec (80-100=high, 60-79=normal, 40-59=warning, 20-39=penalized, <20=hidden). Formula: response×0.3 + completion×0.4 + activity×0.3 − latePenalty.",
+    "metrics_api": "GET /api/admin/metrics returns exactly 3 KPIs as specified: conversion (paid/sent invoices), avg_order_time (hours between created_at → completedAt), repeat_rate (customers with 2+ orders / total customers). All metrics have correct sub-fields.",
+    "data_state": "Test environment has minimal data (0 invoices, 0 orders, 1 provider with score=0/tier=hidden). This is expected for a fresh deployment. Metrics return 0 values but structure is correct.",
+    "frontend_routes": "Both /admin/business-metrics and /admin/provider-health routes are registered in App.js and return HTTP 200. Components exist and are properly imported.",
+    "sidebar_integration": "Layout.js includes 'control' group (id: 'control', labelKey: 'control') with two items: {path: '/admin/business-metrics', label: 'Бізнес-метрики'} and {path: '/admin/provider-health', label: 'Provider Pressure'}. Visible only to master_admin and admin roles."
+  }
+}

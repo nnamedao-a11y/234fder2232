@@ -1,0 +1,100 @@
+/* =============================================================================
+ * BIBI Cars — Coming Soon page
+ * ========================================================================== */
+
+.bibi-coming-soon {
+  width: 100%;
+  background: var(--bibi-black);
+  color: var(--bibi-white);
+}
+
+.bibi-coming-soon__body {
+  background: var(--bibi-black);
+  padding: clamp(40px, 6vw, 100px) 0 clamp(80px, 12vw, 200px);
+  display: flex;
+  justify-content: center;
+}
+
+.bibi-coming-soon__body--full {
+  min-height: calc(100vh - 240px);
+  align-items: center;
+  padding: clamp(60px, 10vw, 160px) 0;
+}
+
+.bibi-coming-soon__card {
+  max-width: 760px;
+  margin: 0 auto;
+  border: 1px solid var(--bibi-yellow);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(254, 174, 0, 0.05) 0%, rgba(0, 0, 0, 0) 100%);
+  padding: clamp(40px, 6vw, 96px) clamp(24px, 5vw, 80px);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3vw, 32px);
+  align-items: center;
+}
+
+.bibi-coming-soon__badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: var(--bibi-yellow);
+  color: #000;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bibi-coming-soon__title {
+  margin: 0;
+  font-family: var(--bibi-font);
+  font-size: clamp(28px, 4vw, 56px);
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--bibi-white);
+}
+
+.bibi-coming-soon__text {
+  margin: 0;
+  font-size: clamp(16px, 1.4vw, 20px);
+  line-height: 1.5;
+  color: var(--bibi-text-mute-2);
+  max-width: 540px;
+}
+
+.bibi-coming-soon__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+.bibi-btn--ghost {
+  background: transparent !important;
+  color: var(--bibi-yellow) !important;
+  border: 1px solid var(--bibi-yellow) !important;
+  height: 45px;
+  padding: 0 28px;
+}
+
+@media (max-width: 768px) {
+  .bibi-coming-soon__body {
+    padding: 24px 16px 64px;
+  }
+  .bibi-coming-soon__card {
+    padding: 32px 20px;
+    gap: 18px;
+    border-radius: 12px;
+  }
+  .bibi-coming-soon__actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+  .bibi-coming-soon__actions .bibi-btn {
+    width: 100%;
+  }
+}

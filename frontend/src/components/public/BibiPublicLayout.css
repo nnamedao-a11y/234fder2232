@@ -1,0 +1,984 @@
+/* =============================================================================
+ * BIBI Cars — About Us page (V6 — PIXEL-PERFECT Figma 1920×5031)
+ *
+ * Точные координаты с canvas Figma (1920×5031):
+ *
+ *   FRAME 1 (y=858–1333)
+ *     • IMG-0463 (big landscape) :  x=108  y=858   634×475
+ *     • TEXT  "Our company..."   :  x≈978  y≈858    ~830×~120
+ *     • IMG-0450 (small portrait):  x=1215 y=1030   214×303
+ *
+ *   FRAME 2 (y=1480–2311)
+ *     • HEADLINE "We combine..." :  x≈275  y≈1480  1126×141
+ *     • image-84 (small portrait):  x=307  y=1699   236×314
+ *     • TEXT "We'll help..."     :  x≈960  y≈1820   ~860×120
+ *     • IMG-8461 (big landscape) :  x=928  y=1903   725×408
+ *
+ *   CTA / Quick Call card        :  x=678  y=3534   564×268
+ *
+ * На десктопе (≥1024px) фото/тексты позиционируются ABSOLUTE с процентами от
+ * 1920px ⇒ pixel-perfect воспроизведение Figma.
+ * На планшете/мобильном переключаемся в flex-column.
+ * ========================================================================== */
+
+:root {
+  --bibi-yellow: #FEAE00;
+  --bibi-bg-dark: #1D1D1B;
+  --bibi-black: #000;
+  --bibi-white: #FFF;
+  --bibi-border: #555452;
+  --bibi-text-mute: #5E5E5E;
+  --bibi-text-mute-2: #949494;
+
+  --bibi-font: "Mazzard","Mazzard H","Mazzard M",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --bibi-font-helv: "Helvetica Now Display","Helvetica Now","Helvetica Neue",Helvetica,Arial,sans-serif;
+
+  --bibi-container: 1920px;
+  --bibi-container-pad: 100px;
+}
+
+.bibi-about,
+.bibi-about * { box-sizing: border-box; }
+
+.bibi-about {
+  width: 100%;
+  background: var(--bibi-black);
+  color: var(--bibi-white);
+  font-family: var(--bibi-font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+.bibi-container {
+  max-width: 1720px;
+  margin: 0 auto;
+  padding: 0 var(--bibi-container-pad);
+}
+
+.bibi-accent { color: var(--bibi-yellow); }
+
+/* ─── Buttons ─────────────────────────────────────────────────────────── */
+
+.bibi-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  padding: 0 32px;
+  height: 45px;
+  font-family: var(--bibi-font);
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #000;
+  cursor: pointer;
+  transition: filter 0.2s ease, transform 0.05s ease;
+  white-space: nowrap;
+}
+.bibi-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.bibi-btn:hover:not(:disabled) { filter: brightness(1.08); }
+.bibi-btn:active:not(:disabled) { transform: translateY(1px); }
+.bibi-btn--primary { background: var(--bibi-yellow); color: #000; }
+.bibi-btn--ghost {
+  background: transparent;
+  color: var(--bibi-yellow);
+  border: 1px solid var(--bibi-yellow);
+}
+.bibi-btn--ghost:hover:not(:disabled) {
+  background: rgba(254, 174, 0, 0.1);
+  filter: none;
+}
+
+/* =============================================================================
+ *  HEADER
+ * ========================================================================== */
+
+.bibi-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  background: var(--bibi-bg-dark);
+  height: 100px;
+}
+.bibi-header__inner {
+  max-width: 1720px;
+  margin: 0 auto;
+  height: 100%;
+  padding: 0 var(--bibi-container-pad);
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.7vw, 32px);
+}
+.bibi-header__logo { display: block; flex-shrink: 0; }
+.bibi-header__logo img { display: block; height: 48px; width: auto; }
+.bibi-header__nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(20px, 2.2vw, 40px);
+  margin-left: clamp(8px, 1.6vw, 32px);
+}
+.bibi-header__nav-link {
+  color: var(--bibi-white);
+  font-size: 16px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+.bibi-header__nav-link:hover,
+.bibi-header__nav-link.is-active { color: var(--bibi-yellow); }
+
+.bibi-header__search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 0 1 277px;
+  min-width: 180px;
+  height: 39px;
+  padding: 0 11px;
+  border: 1px solid var(--bibi-border);
+  border-radius: 7.5px;
+  background: transparent;
+}
+.bibi-header__search-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.bibi-header__search img,
+.bibi-header__search-btn img { width: 22px; height: 22px; opacity: 0.85; }
+.bibi-header__search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--bibi-white);
+  font-family: var(--bibi-font-helv);
+  font-size: 14px;
+  min-width: 0;
+}
+.bibi-header__search input::placeholder { color: var(--bibi-text-mute); }
+
+.bibi-header__phones {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--bibi-font);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--bibi-yellow);
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+}
+.bibi-header__phones a {
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  font-weight: inherit;
+}
+.bibi-header__lang-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.bibi-header__lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  color: #E8E8E8;
+  font-family: var(--bibi-font);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 6px 4px;
+}
+.bibi-header__lang:hover { color: var(--bibi-yellow); }
+.bibi-header__lang-arrow {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+.bibi-header__lang-arrow.is-open { transform: rotate(180deg); }
+
+.bibi-header__lang-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 88px;
+  margin: 0;
+  padding: 6px 0;
+  list-style: none;
+  background: var(--bibi-bg-dark);
+  border: 1px solid var(--bibi-border);
+  border-radius: 6px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+  z-index: 60;
+}
+.bibi-header__lang-item {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: var(--bibi-white);
+  font-family: var(--bibi-font);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.bibi-header__lang-item:hover {
+  background: rgba(254, 174, 0, 0.12);
+  color: var(--bibi-yellow);
+}
+.bibi-header__lang-item.is-active { color: var(--bibi-yellow); }
+.bibi-header__profile { display: flex; align-items: center; }
+.bibi-header__profile img { width: 24px; height: 24px; }
+.bibi-header__cta { width: 171px; padding: 0 16px; flex-shrink: 0; }
+
+.bibi-header__burger {
+  display: none;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.bibi-header__burger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--bibi-yellow);
+  transition: transform 0.25s, opacity 0.25s;
+}
+.bibi-header__burger.is-open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+.bibi-header__burger.is-open span:nth-child(2) { opacity: 0; }
+.bibi-header__burger.is-open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+/* =============================================================================
+ *  HERO
+ * ========================================================================== */
+
+.bibi-hero {
+  background: var(--bibi-black);
+  /* Figma: breadcrumb y≈350, About Us h1 y≈486, tagline y≈623 → frame1 y=858 */
+  padding: clamp(56px, 4.5vw, 87px) 0 clamp(60px, 6.6vw, 127px);
+}
+.bibi-breadcrumb {
+  font-size: clamp(14px, 1.04vw, 20px);
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--bibi-text-mute);
+}
+.bibi-breadcrumb a { color: var(--bibi-text-mute); text-decoration: none; }
+.bibi-breadcrumb a:hover { color: var(--bibi-yellow); }
+.bibi-breadcrumb span { color: var(--bibi-yellow); }
+
+.bibi-hero__title {
+  margin: clamp(32px, 3.4vw, 65px) 0 0;
+  /* Figma h1 size 64 */
+  font-size: clamp(38px, 3.33vw, 64px);
+  line-height: 1;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--bibi-white);
+}
+.bibi-hero__tagline {
+  /* Figma: tagline x=344, y=623, font 100, line-height 99.9% */
+  margin: clamp(48px, 6.5vw, 125px) 0 0;
+  padding-left: clamp(0px, 12.7vw, 244px);
+  max-width: 1500px;
+  font-size: clamp(34px, 5.2vw, 100px);
+  line-height: 1;
+  font-weight: 700;
+  color: var(--bibi-yellow);
+}
+
+/* =============================================================================
+ *  FRAME 1 — pixel-perfect at desktop
+ *  Canvas y=858–1333  (height 475)
+ * ========================================================================== */
+
+.bibi-section { background: var(--bibi-black); }
+
+.bibi-frame-1 {
+  position: relative;
+  width: 100%;
+  /* gap 858 - hero_bottom; padding included via hero */
+  padding-top: 0;
+  padding-bottom: clamp(60px, 7vw, 130px);
+}
+
+.bibi-frame-1__canvas {
+  position: relative;
+  max-width: var(--bibi-container);
+  margin: 0 auto;
+  /* canvas section height = 475 ; width = 1920 → aspect-ratio 1920/475 */
+  aspect-ratio: 1920 / 475;
+}
+
+/* All frame-1 children positioned absolutely on the 1920×475 canvas */
+.bibi-frame-1__photo--big {
+  position: absolute;
+  /* x=108, y=0, w=634, h=475 */
+  left: 5.625%;        /* 108 / 1920 */
+  top: 0;
+  width: 33.0208%;     /* 634 / 1920 */
+  height: 100%;
+}
+.bibi-frame-1__photo--big img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bibi-frame-1__photo--small {
+  position: absolute;
+  /* x=1215, y=172, w=214, h=303 → on 1920×475 canvas
+     y % = 172/475 = 36.21%, h % = 303/475 = 63.79% */
+  left: 63.281%;       /* 1215 / 1920 */
+  top: 36.21%;         /* 172 / 475 */
+  width: 11.146%;      /* 214 / 1920 */
+  height: 63.79%;      /* 303 / 475 */
+}
+.bibi-frame-1__photo--small img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bibi-frame-1__text {
+  position: absolute;
+  /* Text "Our company specializes..." top-right block.
+     Approx from Figma render: x≈973, y≈18, width≈830, font-size 24 */
+  left: 50.677%;       /* 973 / 1920 */
+  top: 3.78%;          /* 18 / 475 */
+  width: 43.23%;       /* 830 / 1920 */
+  margin: 0;
+  /* responsive font scaling: at 1920w ⇒ 24px */
+  font-size: clamp(14px, 1.25vw, 24px);
+  line-height: 1.05;
+  font-weight: 500;
+  color: var(--bibi-white);
+}
+
+/* =============================================================================
+ *  FRAME 2 — pixel-perfect at desktop
+ *  Canvas: section starts at y=1480 (headline) ends at y=2311.
+ *  Total height 831. Use canvas 1920×831.
+ * ========================================================================== */
+
+.bibi-frame-2 {
+  position: relative;
+  width: 100%;
+  padding-top: clamp(40px, 5vw, 100px);
+  padding-bottom: clamp(80px, 10vw, 180px);
+}
+
+.bibi-frame-2__canvas {
+  position: relative;
+  max-width: var(--bibi-container);
+  margin: 0 auto;
+  /* canvas height 831 (1480→2311); width 1920 */
+  aspect-ratio: 1920 / 831;
+}
+
+.bibi-frame-2__headline {
+  position: absolute;
+  /* Figma: x≈275, y≈0 (relative to canvas top), w≈1126, font 40 */
+  left: 14.32%;        /* 275 / 1920 */
+  top: 0;
+  width: 58.65%;       /* 1126 / 1920 */
+  margin: 0;
+  font-size: clamp(20px, 2.08vw, 40px);
+  line-height: 1.05;
+  font-weight: 500;
+  color: var(--bibi-white);
+}
+
+.bibi-frame-2__photo--small {
+  position: absolute;
+  /* x=307, y=219, w=236, h=314 → on canvas 1920×831
+     y%=219/831=26.36%, h%=314/831=37.79% */
+  left: 15.99%;        /* 307 / 1920 */
+  top: 26.36%;         /* 219 / 831 */
+  width: 12.292%;      /* 236 / 1920 */
+  height: 37.79%;      /* 314 / 831 */
+}
+.bibi-frame-2__photo--small img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bibi-frame-2__text {
+  position: absolute;
+  /* "We'll help..." text — top-right area above big landscape photo.
+     Approx: x≈960, y≈339, w≈497, font 24 */
+  left: 50%;           /* 960 / 1920 */
+  top: 40.79%;         /* 339 / 831 */
+  width: 30%;          /* 576 / 1920 - a bit wider for safety */
+  margin: 0;
+  font-size: clamp(14px, 1.25vw, 24px);
+  line-height: 1.05;
+  font-weight: 500;
+  color: var(--bibi-white);
+}
+
+.bibi-frame-2__photo--big {
+  position: absolute;
+  /* x=928, y=423, w=725, h=408 → canvas 1920×831
+     y%=423/831=50.90%, h%=408/831=49.10% */
+  left: 48.333%;       /* 928 / 1920 */
+  top: 50.90%;         /* 423 / 831 */
+  width: 37.76%;       /* 725 / 1920 */
+  height: 49.10%;      /* 408 / 831 */
+}
+.bibi-frame-2__photo--big img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* =============================================================================
+ *  CTA — "Get free professional advice" + form + Quick call card
+ * ========================================================================== */
+
+.bibi-cta {
+  background: var(--bibi-bg-dark);
+  /* Figma: title at y≈2606, form at y≈2891, quick-call at y≈3534
+     Section bg = #1D1D1B, top padding ≈170, bottom padding ≈210 */
+  padding: clamp(72px, 9vw, 170px) clamp(20px, 6vw, 120px)
+           clamp(96px, 13vw, 210px);
+}
+.bibi-cta__inner {
+  max-width: 1330px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(80px, 11vw, 220px);
+}
+.bibi-cta__title {
+  margin: 0;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1vw, 18px);
+  /* Figma: 60px font */
+  font-size: clamp(28px, 3.12vw, 60px);
+  line-height: 1;
+}
+.bibi-cta__title-yellow {
+  color: var(--bibi-yellow);
+  text-transform: uppercase;
+}
+.bibi-cta__title-white  { color: var(--bibi-white); }
+
+.bibi-form {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(60px, 7vw, 85px);
+  width: 372px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.bibi-form__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+.bibi-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+}
+.bibi-form__label {
+  font-size: 14px;
+  color: var(--bibi-white);
+  font-weight: 500;
+}
+.bibi-form__field input {
+  width: 100%;
+  height: 45px;
+  border: 1px solid var(--bibi-border);
+  border-radius: 4px;
+  background: transparent;
+  outline: none;
+  color: var(--bibi-white);
+  font-family: var(--bibi-font);
+  font-size: 14px;
+  padding: 0 15px;
+  transition: border-color 0.2s ease;
+}
+.bibi-form__field input::placeholder { color: var(--bibi-text-mute-2); }
+.bibi-form__field input:focus { border-color: var(--bibi-yellow); }
+.bibi-form__field--phone input { padding-left: 88px; }
+.bibi-form__phone-prefix {
+  position: absolute;
+  bottom: 10px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  font-size: 14px;
+  color: var(--bibi-text-mute-2);
+}
+.bibi-form__phone-prefix img {
+  width: 24px;
+  height: 18px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+.bibi-form__error { color: #ff6464; font-size: 13px; text-align: center; }
+.bibi-form__ok {
+  color: var(--bibi-yellow);
+  font-size: 14px;
+  text-align: center;
+  font-weight: 600;
+}
+.bibi-form__submit { width: 100%; height: 45px; }
+
+/* quick-call card — Figma: 564×268, x=678 (centered) */
+.bibi-quickcall {
+  width: 564px;
+  max-width: 100%;
+  margin: 0 auto;
+  border: 1px solid var(--bibi-yellow);
+  border-radius: 8px;
+  padding: 51px 112px 52px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 45px;
+}
+.bibi-quickcall h3 {
+  margin: 0;
+  font-size: clamp(22px, 1.66vw, 32px);
+  line-height: 1;
+  font-weight: 700;
+  color: var(--bibi-white);
+}
+.bibi-quickcall__phones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.bibi-quickcall a {
+  font-family: var(--bibi-font-helv);
+  font-size: clamp(20px, 1.25vw, 24px);
+  font-weight: 700;
+  color: var(--bibi-yellow);
+  text-decoration: none;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+.bibi-quickcall a:hover { text-decoration: underline; }
+
+/* =============================================================================
+ *  FOOTER
+ * ========================================================================== */
+
+.bibi-footer {
+  background: var(--bibi-black);
+  padding: clamp(48px, 7vw, 110px) 0 33px;
+}
+.bibi-footer__inner {
+  max-width: 1720px;
+  margin: 0 auto;
+  padding: 0 var(--bibi-container-pad);
+}
+.bibi-footer__top {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: clamp(24px, 4vw, 80px);
+  padding-bottom: clamp(48px, 6vw, 100px);
+  border-bottom: 1px solid #1a1a1a;
+}
+.bibi-footer__logo img {
+  display: block;
+  height: clamp(80px, 7.6vw, 146px);
+  width: auto;
+}
+.bibi-footer__phones {
+  display: grid;
+  grid-template-columns: auto;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--bibi-white);
+}
+.bibi-footer__phones-label { margin-bottom: 8px; }
+.bibi-footer__phones a {
+  font-size: clamp(20px, 1.25vw, 24px);
+  font-weight: 600;
+  color: var(--bibi-yellow);
+  text-decoration: none;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+.bibi-footer__cta { width: 171px; }
+
+.bibi-footer__mid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 0.7fr 0.7fr;
+  gap: clamp(24px, 4vw, 80px);
+  padding: clamp(40px, 5vw, 80px) 0 clamp(48px, 6vw, 100px);
+}
+.bibi-footer__menu {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2vw, 32px);
+  font-size: clamp(16px, 1.25vw, 24px);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.bibi-footer__menu a {
+  color: #EFEFEF;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.bibi-footer__menu a:hover { color: var(--bibi-yellow); }
+.bibi-footer__small-label {
+  display: block;
+  font-size: 14px;
+  color: var(--bibi-white);
+  margin-bottom: 14px;
+}
+.bibi-footer__address-line {
+  margin: 0 0 12px;
+  font-size: clamp(16px, 1.25vw, 24px);
+  font-weight: 600;
+  color: var(--bibi-yellow);
+  line-height: 1.25;
+}
+.bibi-footer__hours {
+  display: block;
+  font-size: 14px;
+  color: var(--bibi-text-mute-2);
+}
+.bibi-footer__hours-mobile { display: none; }
+.bibi-footer__viber a img { width: 45px; height: 45px; display: block; }
+.bibi-footer__social-icons {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+}
+.bibi-footer__social-icons img { width: 32px; height: 32px; display: block; }
+.bibi-footer__social-link { display: inline-flex; align-items: center; justify-content: center; transition: transform 0.18s ease, filter 0.18s ease; }
+.bibi-footer__social-link:hover { transform: translateY(-2px); filter: brightness(1.15); }
+.bibi-footer__social-svg { width: 28px; height: 28px; color: var(--bibi-yellow, #FEAE00); display: block; }
+
+.bibi-footer__bottom {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 32px;
+  padding-top: 28px;
+  font-size: 12px;
+  color: var(--bibi-white);
+  text-transform: uppercase;
+}
+.bibi-footer__copy { display: flex; align-items: center; gap: 8px; }
+.bibi-footer__copy img { width: 18px; height: 18px; }
+.bibi-footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  font-size: 12px;
+}
+.bibi-footer__legal a { color: var(--bibi-white); text-decoration: none; }
+.bibi-footer__legal a:hover { color: var(--bibi-yellow); }
+.bibi-footer__credit {
+  text-decoration: underline;
+  text-align: right;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* =============================================================================
+ *  RESPONSIVE BREAKPOINTS
+ * ========================================================================== */
+
+@media (max-width: 1440px) {
+  :root { --bibi-container-pad: 60px; }
+}
+@media (max-width: 1280px) {
+  :root { --bibi-container-pad: 40px; }
+  .bibi-header__phones,
+  .bibi-header__lang-wrap { display: none; }
+  .bibi-header__nav { gap: 22px; margin-left: 0; }
+  .bibi-header__search { flex: 0 1 220px; min-width: 140px; }
+}
+
+/* ≤ 1024px — TABLET: switch to flex layout (no more absolute positioning) */
+@media (max-width: 1024px) {
+  :root { --bibi-container-pad: 32px; }
+  .bibi-header__search { display: none; }
+
+  .bibi-frame-1__canvas {
+    aspect-ratio: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    padding: 0 var(--bibi-container-pad);
+  }
+  .bibi-frame-1__photo--big,
+  .bibi-frame-1__photo--small,
+  .bibi-frame-1__text {
+    position: static;
+    width: 100%;
+    height: auto;
+  }
+  .bibi-frame-1__photo--big { aspect-ratio: 634/475; }
+  .bibi-frame-1__photo--small {
+    aspect-ratio: 214/303;
+    width: 50%;
+    max-width: 280px;
+    align-self: flex-end;
+  }
+  .bibi-frame-1__text { font-size: 22px; }
+
+  .bibi-frame-2__canvas {
+    aspect-ratio: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    padding: 0 var(--bibi-container-pad);
+  }
+  .bibi-frame-2__headline,
+  .bibi-frame-2__photo--small,
+  .bibi-frame-2__text,
+  .bibi-frame-2__photo--big {
+    position: static;
+    width: 100%;
+    height: auto;
+  }
+  .bibi-frame-2__headline { font-size: clamp(22px, 3vw, 32px); }
+  .bibi-frame-2__photo--small {
+    aspect-ratio: 236/314;
+    width: 45%; max-width: 280px;
+  }
+  .bibi-frame-2__text { font-size: 22px; }
+  .bibi-frame-2__photo--big {
+    aspect-ratio: 725/408;
+    width: 100%;
+  }
+
+  .bibi-footer__top { grid-template-columns: 1fr auto; }
+  .bibi-footer__top .bibi-footer__cta {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+  .bibi-footer__mid { grid-template-columns: 1fr 1fr; gap: 40px; }
+}
+
+/* =============================================================================
+ * ≤ 768px — MOBILE (точно по дизайн-макету)
+ * Header: logo (left), phones (center), burger (right) — БЕЗ nav/search/lang/profile/CTA
+ * Hero: breadcrumb + h1 центрированы
+ * Footer: всё центрировано, Get-in-touch — outline-кнопка
+ * ========================================================================== */
+@media (max-width: 768px) {
+  :root { --bibi-container-pad: 20px; }
+
+  /* ── Header: logo | phones | burger ─────────────────────────────────── */
+  .bibi-header { height: 64px; }
+  .bibi-header__inner {
+    padding: 0 16px;
+    gap: 12px;
+    justify-content: space-between;
+  }
+  .bibi-header__logo img { height: 28px; }
+  /* На мобиле скрываем всё кроме логотипа, телефонов и бургера */
+  .bibi-header__search,
+  .bibi-header__lang-wrap,
+  .bibi-header__profile,
+  .bibi-header__cta { display: none; }
+  /* Телефоны показываем в центре */
+  .bibi-header__phones {
+    display: flex !important;
+    flex-direction: column;
+    gap: 1px;
+    margin-left: auto;
+    text-align: right;
+    font-size: 11px;
+    line-height: 1.2;
+  }
+  .bibi-header__phones a { font-size: 11px; }
+  /* Бургер */
+  .bibi-header__burger { display: flex; margin-left: 0; }
+  /* Слайд-меню по бургеру */
+  .bibi-header__nav {
+    position: absolute;
+    top: 64px; left: 0; right: 0;
+    margin: 0;
+    flex-direction: column;
+    background: var(--bibi-bg-dark);
+    padding: 24px;
+    gap: 20px;
+    border-top: 1px solid #2a2a2a;
+    transform: translateY(-150%);
+    transition: transform 0.3s ease;
+    pointer-events: none;
+    z-index: 49;
+  }
+  .bibi-header__nav.is-open {
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  /* ── Hero: всё центрировано ─────────────────────────────────────────── */
+  .bibi-hero {
+    padding: 32px 0 24px;
+    text-align: center;
+  }
+  .bibi-breadcrumb { font-size: 13px; }
+  .bibi-hero__title {
+    margin-top: 18px;
+    font-size: clamp(32px, 9vw, 44px);
+    text-align: center;
+  }
+  .bibi-hero__tagline { margin-top: 32px; padding-left: 0; text-align: center; }
+
+  /* ── About-Us specific (frame-1, frame-2) на мобиле ────────────────── */
+  .bibi-frame-1 { padding-bottom: 32px; }
+  .bibi-frame-1__photo--small { width: 60%; align-self: center; }
+  .bibi-frame-2 { padding: 32px 0 56px; }
+  .bibi-frame-2__photo--small { width: 60%; align-self: center; }
+
+  .bibi-cta { padding: 60px 16px 80px; }
+  .bibi-cta__inner { gap: 60px; }
+  .bibi-quickcall { padding: 32px 20px; gap: 22px; }
+
+  /* ── Footer: всё центрировано, мобильный layout ─────────────────────── */
+  .bibi-footer { padding: 40px 0 24px; }
+  .bibi-footer__inner { padding: 0 20px; }
+
+  /* TOP: logo (огромный слева) → phones по центру → CTA outline */
+  .bibi-footer__top {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 28px;
+    padding-bottom: 32px;
+    border-bottom: none;
+  }
+  .bibi-footer__logo {
+    justify-self: start;
+  }
+  .bibi-footer__logo img { height: 96px; }
+  .bibi-footer__phones {
+    justify-self: center;
+    text-align: center;
+  }
+  .bibi-footer__phones-label { margin-bottom: 4px; }
+  /* Get in touch — outline-кнопка на мобиле */
+  .bibi-footer .bibi-footer__cta {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    width: 100%;
+    background: transparent !important;
+    color: var(--bibi-yellow) !important;
+    border: 1px solid var(--bibi-yellow) !important;
+    height: 52px !important;
+    text-transform: none !important;
+    font-weight: 500;
+    border-radius: 6px;
+    padding: 0 !important;
+  }
+
+  /* MID: address + viber + social + menu — реорганизованы по grid-row под дизайн */
+  .bibi-footer__mid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 32px 24px;
+    padding: 28px 0;
+    border-top: 1px solid #1a1a1a;
+    border-bottom: 1px solid #1a1a1a;
+  }
+  /* row 1: address на всю ширину */
+  .bibi-footer__address {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    text-align: left;
+  }
+  /* row 2: viber слева, social справа */
+  .bibi-footer__viber {
+    grid-column: 1;
+    grid-row: 2;
+    text-align: left;
+  }
+  .bibi-footer__social {
+    grid-column: 2;
+    grid-row: 2;
+    text-align: right;
+  }
+  .bibi-footer__social-icons { justify-content: flex-end; }
+  /* row 3: меню по центру */
+  .bibi-footer__menu {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+    padding-top: 16px;
+    border-top: 1px solid #1a1a1a;
+  }
+
+  /* BOTTOM: legal — горизонтально по 3 в ряд, остальное по центру */
+  .bibi-footer__bottom {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 12px;
+  }
+  .bibi-footer__copy {
+    order: 4;
+    justify-content: center;
+    font-size: 11px;
+  }
+  .bibi-footer__legal {
+    order: 1;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 11px;
+  }
+  .bibi-footer__credit {
+    order: 3;
+    text-align: center;
+    font-size: 11px;
+  }
+  .bibi-footer__hours-mobile { display: inline; }
+}
+
+@media (max-width: 480px) {
+  .bibi-header__nav-link { font-size: 18px; }
+  .bibi-quickcall { padding: 28px 16px; gap: 18px; }
+  .bibi-footer__logo img { height: 80px; }
+  .bibi-footer__legal { gap: 12px 16px; justify-content: center; }
+}

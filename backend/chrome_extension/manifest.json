@@ -1,0 +1,66 @@
+{
+  "manifest_version": 3,
+  "name": "BIBI Cars",
+  "short_name": "BIBI",
+  "version": "4.1.0",
+  "description": "BIBI Cars — асистент для пошуку авто з аукціонів. Працює у фоновому режимі та допомагає CRM знаходити VIN на захищених сайтах.",
+  "permissions": [
+    "cookies",
+    "storage",
+    "activeTab",
+    "tabs",
+    "scripting",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://poctra.com/*",
+    "https://*.poctra.com/*",
+    "https://carsfromwest.com/*",
+    "https://*.carsfromwest.com/*",
+    "https://autoauctionhistory.com/*",
+    "https://*.autoauctionhistory.com/*",
+    "https://www.salvagebid.com/*",
+    "https://*.salvagebid.com/*",
+    "https://*.emergentagent.com/*",
+    "http://localhost:8001/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "BIBI Cars",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://poctra.com/*", "https://*.poctra.com/*"],
+      "js": ["utils/sender.js", "sites/poctra.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://carsfromwest.com/*", "https://*.carsfromwest.com/*"],
+      "js": ["utils/sender.js", "sites/carsfromwest.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://autoauctionhistory.com/*", "https://*.autoauctionhistory.com/*"],
+      "js": ["utils/sender.js", "sites/autoauctionhistory.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.salvagebid.com/*", "https://*.salvagebid.com/*"],
+      "js": ["utils/sender.js", "sites/salvagebid.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

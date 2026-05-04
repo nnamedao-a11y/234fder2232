@@ -1,0 +1,122 @@
+/* =============================================================================
+ * BIBI Cars — Policy page (Privacy / Terms / Cookies / Conditions)
+ * ========================================================================== */
+
+.bibi-policy-page {
+  font-family: var(--bibi-font, 'Mazzard', 'Mazzard H', 'Mazzard M', system-ui, sans-serif);
+}
+
+.bibi-policy-hero {
+  background: linear-gradient(180deg, #0E0E0D 0%, var(--bibi-black, #000) 100%);
+  padding: clamp(48px, 7vw, 96px) 0 clamp(32px, 5vw, 64px);
+  border-bottom: 1px solid #1A1A1A;
+}
+
+.bibi-policy-breadcrumb {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #9A9A9A;
+  margin-bottom: 16px;
+}
+
+.bibi-policy-breadcrumb a {
+  color: var(--bibi-yellow, #FEAE00);
+  text-decoration: none;
+  margin-right: 8px;
+}
+
+.bibi-policy-breadcrumb a:hover { filter: brightness(1.1); }
+
+.bibi-policy-title {
+  margin: 0;
+  font-size: clamp(34px, 5.5vw, 64px);
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--bibi-white, #FFF);
+  letter-spacing: -0.01em;
+}
+
+.bibi-policy-body {
+  background: var(--bibi-black, #000);
+  padding: clamp(40px, 6vw, 80px) 0 clamp(80px, 12vw, 140px);
+}
+
+.bibi-policy-prose {
+  max-width: 880px;
+  margin: 0 auto;
+  color: #D8D8D8;
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.bibi-policy-prose h1,
+.bibi-policy-prose h2,
+.bibi-policy-prose h3,
+.bibi-policy-prose h4 {
+  color: var(--bibi-white, #FFF);
+  font-weight: 700;
+  margin-top: 2em;
+  margin-bottom: 0.6em;
+  line-height: 1.2;
+}
+
+.bibi-policy-prose h1 { font-size: clamp(24px, 3vw, 32px); }
+.bibi-policy-prose h2 { font-size: clamp(22px, 2.6vw, 28px); }
+.bibi-policy-prose h3 { font-size: clamp(18px, 2vw, 22px); }
+
+.bibi-policy-prose h1:first-child,
+.bibi-policy-prose h2:first-child,
+.bibi-policy-prose h3:first-child { margin-top: 0; }
+
+.bibi-policy-prose p { margin: 0 0 1.1em; }
+
+.bibi-policy-prose ul,
+.bibi-policy-prose ol {
+  margin: 0 0 1.1em 1.4em;
+  padding: 0;
+}
+
+.bibi-policy-prose li { margin-bottom: 0.5em; }
+
+.bibi-policy-prose a {
+  color: var(--bibi-yellow, #FEAE00);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.bibi-policy-prose a:hover { filter: brightness(1.1); }
+
+.bibi-policy-prose strong { color: #FFF; }
+.bibi-policy-prose em { font-style: italic; }
+
+.bibi-policy-prose blockquote {
+  border-left: 3px solid var(--bibi-yellow, #FEAE00);
+  padding: 0.4em 0 0.4em 1em;
+  margin: 1.4em 0;
+  color: #C8C8C8;
+  background: rgba(254, 174, 0, 0.04);
+}
+
+.bibi-policy-prose hr {
+  border: 0;
+  border-top: 1px solid #1F1F1D;
+  margin: 2em 0;
+}
+
+.bibi-policy-back {
+  max-width: 880px;
+  margin: 48px auto 0;
+  padding-top: 24px;
+  border-top: 1px solid #1A1A1A;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bibi-policy-back a {
+  color: var(--bibi-yellow, #FEAE00);
+  text-decoration: none;
+}
+
+.bibi-policy-back a:hover { filter: brightness(1.1); }

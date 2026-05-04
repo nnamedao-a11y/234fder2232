@@ -1,0 +1,577 @@
+/* =============================================================================
+ * BIBI Cars — About Us page (V7 — only page-specific styles)
+ *
+ * NOTE: Header / Footer / Buttons / Breadcrumb / Container / :root vars
+ *       are all shared and live in BibiPublicLayout.css.
+ *       This file ONLY contains About-page-specific styles:
+ *         - Hero tagline (yellow huge text)
+ *         - Frame 1 (image + text + image)
+ *         - Frame 2 (text + image + text + image)
+ *         - CTA section (form + quick-call card)
+ *         - Mobile breakpoints for the above
+ *
+ * Точные координаты с canvas Figma (1920×5031):
+ *   FRAME 1 (y=858–1333)
+ *     • IMG-0463 (big landscape) :  x=108  y=858   634×475
+ *     • TEXT  "Our company..."   :  x≈978  y≈858    ~830×~120
+ *     • IMG-0450 (small portrait):  x=1215 y=1030   214×303
+ *
+ *   FRAME 2 (y=1480–2311)
+ *     • HEADLINE "We combine..." :  x≈275  y≈1480  1126×141
+ *     • image-84 (small portrait):  x=307  y=1699   236×314
+ *     • TEXT "We'll help..."     :  x≈960  y≈1820   ~860×120
+ *     • IMG-8461 (big landscape) :  x=928  y=1903   725×408
+ *
+ *   CTA / Quick Call card        :  x=678  y=3534   564×268
+ *
+ * Mobile (≤768px) — Figma 360×3671:
+ *   • Hero centered, title 36px, tagline 24px yellow
+ *   • Frame 1 IMG-0463 wide 70% (252/360), portrait 44% (158/360)
+ *   • Frame 2 portrait 44%, IMG-8461 92% full-width
+ *   • CTA form full-width, button yellow 100%
+ * ========================================================================== */
+
+.bibi-about__main { display: block; }
+
+.bibi-hero__tagline {
+  /* Figma: tagline x=344, y=623, font 100, line-height 99.9% */
+  margin: clamp(48px, 6.5vw, 125px) 0 0;
+  padding-left: clamp(0px, 12.7vw, 244px);
+  max-width: 1500px;
+  font-size: clamp(34px, 5.2vw, 100px);
+  line-height: 1;
+  font-weight: 700;
+  color: var(--bibi-yellow);
+}
+
+/* =============================================================================
+ *  FRAME 1 — pixel-perfect at desktop
+ *  Canvas y=858–1333  (height 475)
+ * ========================================================================== */
+
+.bibi-section { background: var(--bibi-black); }
+
+.bibi-frame-1 {
+  position: relative;
+  width: 100%;
+  /* gap 858 - hero_bottom; padding included via hero */
+  padding-top: 0;
+  padding-bottom: clamp(60px, 7vw, 130px);
+}
+
+.bibi-frame-1__canvas {
+  position: relative;
+  max-width: var(--bibi-container);
+  margin: 0 auto;
+  /* canvas section height = 475 ; width = 1920 → aspect-ratio 1920/475 */
+  aspect-ratio: 1920 / 475;
+}
+
+/* All frame-1 children positioned absolutely on the 1920×475 canvas */
+.bibi-frame-1__photo--big {
+  position: absolute;
+  /* x=108, y=0, w=634, h=475 */
+  left: 5.625%;        /* 108 / 1920 */
+  top: 0;
+  width: 33.0208%;     /* 634 / 1920 */
+  height: 100%;
+}
+.bibi-frame-1__photo--big img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bibi-frame-1__photo--small {
+  position: absolute;
+  /* x=1215, y=172, w=214, h=303 → on 1920×475 canvas
+     y % = 172/475 = 36.21%, h % = 303/475 = 63.79% */
+  left: 63.281%;       /* 1215 / 1920 */
+  top: 36.21%;         /* 172 / 475 */
+  width: 11.146%;      /* 214 / 1920 */
+  height: 63.79%;      /* 303 / 475 */
+}
+.bibi-frame-1__photo--small img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bibi-frame-1__text {
+  position: absolute;
+  /* Text "Our company specializes..." top-right block.
+     Approx from Figma render: x≈973, y≈18, width≈830, font-size 24 */
+  left: 50.677%;       /* 973 / 1920 */
+  top: 3.78%;          /* 18 / 475 */
+  width: 43.23%;       /* 830 / 1920 */
+  margin: 0;
+  /* responsive font scaling: at 1920w ⇒ 24px */
+  font-size: clamp(14px, 1.25vw, 24px);
+  line-height: 1.05;
+  font-weight: 500;
+  color: var(--bibi-white);
+}
+
+/* =============================================================================
+ *  FRAME 2 — pixel-perfect at desktop
+ *  Canvas: section starts at y=1480 (headline) ends at y=2311.
+ *  Total height 831. Use canvas 1920×831.
+ * ========================================================================== */
+
+.bibi-frame-2 {
+  position: relative;
+  width: 100%;
+  padding-top: clamp(40px, 5vw, 100px);
+  padding-bottom: clamp(80px, 10vw, 180px);
+}
+
+.bibi-frame-2__canvas {
+  position: relative;
+  max-width: var(--bibi-container);
+  margin: 0 auto;
+  /* canvas height 831 (1480→2311); width 1920 */
+  aspect-ratio: 1920 / 831;
+}
+
+.bibi-frame-2__headline {
+  position: absolute;
+  /* Figma: x≈275, y≈0 (relative to canvas top), w≈1126, font 40 */
+  left: 14.32%;        /* 275 / 1920 */
+  top: 0;
+  width: 58.65%;       /* 1126 / 1920 */
+  margin: 0;
+  font-size: clamp(20px, 2.08vw, 40px);
+  line-height: 1.05;
+  font-weight: 500;
+  color: var(--bibi-white);
+}
+
+.bibi-frame-2__photo--small {
+  position: absolute;
+  /* x=307, y=219, w=236, h=314 → on canvas 1920×831
+     y%=219/831=26.36%, h%=314/831=37.79% */
+  left: 15.99%;        /* 307 / 1920 */
+  top: 26.36%;         /* 219 / 831 */
+  width: 12.292%;      /* 236 / 1920 */
+  height: 37.79%;      /* 314 / 831 */
+}
+.bibi-frame-2__photo--small img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bibi-frame-2__text {
+  position: absolute;
+  /* "We'll help..." text — top-right area above big landscape photo.
+     Approx: x≈960, y≈339, w≈497, font 24 */
+  left: 50%;           /* 960 / 1920 */
+  top: 40.79%;         /* 339 / 831 */
+  width: 30%;          /* 576 / 1920 - a bit wider for safety */
+  margin: 0;
+  font-size: clamp(14px, 1.25vw, 24px);
+  line-height: 1.05;
+  font-weight: 500;
+  color: var(--bibi-white);
+}
+
+.bibi-frame-2__photo--big {
+  position: absolute;
+  /* x=928, y=423, w=725, h=408 → canvas 1920×831
+     y%=423/831=50.90%, h%=408/831=49.10% */
+  left: 48.333%;       /* 928 / 1920 */
+  top: 50.90%;         /* 423 / 831 */
+  width: 37.76%;       /* 725 / 1920 */
+  height: 49.10%;      /* 408 / 831 */
+}
+.bibi-frame-2__photo--big img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* =============================================================================
+ *  CTA — "Get free professional advice" + form + Quick call card
+ * ========================================================================== */
+
+.bibi-cta {
+  background: var(--bibi-bg-dark);
+  /* Figma: title at y≈2606, form at y≈2891, quick-call at y≈3534
+     Section bg = #1D1D1B, top padding ≈170, bottom padding ≈210 */
+  padding: clamp(72px, 9vw, 170px) clamp(20px, 6vw, 120px)
+           clamp(96px, 13vw, 210px);
+}
+.bibi-cta__inner {
+  max-width: 1330px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(80px, 11vw, 220px);
+}
+.bibi-cta__title {
+  margin: 0;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1vw, 18px);
+  /* Figma: 60px font */
+  font-size: clamp(28px, 3.12vw, 60px);
+  line-height: 1;
+}
+.bibi-cta__title-yellow {
+  color: var(--bibi-yellow);
+  text-transform: uppercase;
+}
+.bibi-cta__title-white  { color: var(--bibi-white); }
+
+.bibi-form {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(60px, 7vw, 85px);
+  width: 372px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+.bibi-form__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+.bibi-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+}
+.bibi-form__label {
+  font-size: 14px;
+  color: var(--bibi-white);
+  font-weight: 500;
+}
+.bibi-form__field input {
+  width: 100%;
+  height: 45px;
+  border: 1px solid var(--bibi-border);
+  border-radius: 4px;
+  background: transparent;
+  outline: none;
+  color: var(--bibi-white);
+  font-family: var(--bibi-font);
+  font-size: 14px;
+  padding: 0 15px;
+  transition: border-color 0.2s ease;
+}
+.bibi-form__field input::placeholder { color: var(--bibi-text-mute-2); }
+.bibi-form__field input:focus { border-color: var(--bibi-yellow); }
+.bibi-form__field--phone input { padding-left: 88px; }
+.bibi-form__field--invalid input {
+  border-color: #ff6464;
+}
+.bibi-form__field--invalid input:focus {
+  border-color: #ff6464;
+}
+.bibi-form__phone-prefix {
+  position: absolute;
+  bottom: 10px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  font-size: 14px;
+  color: var(--bibi-text-mute-2);
+}
+.bibi-form__phone-prefix img {
+  width: 24px;
+  height: 18px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+.bibi-form__error { color: #ff6464; font-size: 13px; text-align: center; }
+.bibi-form__ok {
+  color: var(--bibi-yellow);
+  font-size: 14px;
+  text-align: center;
+  font-weight: 600;
+}
+.bibi-form__submit { width: 100%; height: 45px; }
+
+/* quick-call card — Figma: 564×268, x=678 (centered) */
+.bibi-quickcall {
+  width: 564px;
+  max-width: 100%;
+  margin: 0 auto;
+  border: 1px solid var(--bibi-yellow);
+  border-radius: 8px;
+  padding: 51px 112px 52px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 45px;
+}
+.bibi-quickcall h3 {
+  margin: 0;
+  font-size: clamp(22px, 1.66vw, 32px);
+  line-height: 1;
+  font-weight: 700;
+  color: var(--bibi-white);
+}
+.bibi-quickcall__phones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.bibi-quickcall a {
+  font-family: var(--bibi-font-helv);
+  font-size: clamp(20px, 1.25vw, 24px);
+  font-weight: 700;
+  color: var(--bibi-yellow);
+  text-decoration: none;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+.bibi-quickcall a:hover { text-decoration: underline; }
+
+/* =============================================================================
+ *  RESPONSIVE BREAKPOINTS — only About-page-specific (Frame 1, Frame 2, CTA)
+ *  Header/footer responsive lives in BibiPublicLayout.css
+ * ========================================================================== */
+
+/* ≤ 1024px — TABLET: switch to flex layout (no more absolute positioning) */
+@media (max-width: 1024px) {
+  .bibi-frame-1__canvas {
+    aspect-ratio: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    padding: 0 var(--bibi-container-pad);
+  }
+  .bibi-frame-1__photo--big,
+  .bibi-frame-1__photo--small,
+  .bibi-frame-1__text {
+    position: static;
+    width: 100%;
+    height: auto;
+  }
+  .bibi-frame-1__photo--big { aspect-ratio: 634/475; }
+  .bibi-frame-1__photo--small {
+    aspect-ratio: 214/303;
+    width: 50%;
+    max-width: 280px;
+    align-self: flex-end;
+  }
+  .bibi-frame-1__text { font-size: 22px; }
+
+  .bibi-frame-2__canvas {
+    aspect-ratio: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    padding: 0 var(--bibi-container-pad);
+  }
+  .bibi-frame-2__headline,
+  .bibi-frame-2__photo--small,
+  .bibi-frame-2__text,
+  .bibi-frame-2__photo--big {
+    position: static;
+    width: 100%;
+    height: auto;
+  }
+  .bibi-frame-2__headline { font-size: clamp(22px, 3vw, 32px); }
+  .bibi-frame-2__photo--small {
+    aspect-ratio: 236/314;
+    width: 45%; max-width: 280px;
+  }
+  .bibi-frame-2__text { font-size: 22px; }
+  .bibi-frame-2__photo--big {
+    aspect-ratio: 725/408;
+    width: 100%;
+  }
+}
+
+/* =============================================================================
+ * ≤ 768px — MOBILE (точно по дизайн-макету Figma 360×3671)
+ *
+ * Эталонные позиции из SVG (mobile 360px):
+ *   Header              : 360×80 px (черный)
+ *   Hero (breadcrumb+title+tagline) : центрировано, до y≈340
+ *   Photo IMG-0463 wide : x=54  y=356  w=252  h=189  →  70% ширины, 15% pad
+ *   Text 1 (white+yellow)
+ *   Photo IMG-0450 portr: x=101 y=699  w=158  h=224  →  44% ширины, 28% pad
+ *   Text 2 (white+yellow)
+ *   Photo image-84 portr: x=101 y=1171 w=158  h=210  →  44% ширины, 28% pad
+ *   Text 3 (white)
+ *   Photo IMG-8461 wide : x=16  y=1552 w=328  h=184  →  91% ширины, 4.5% pad
+ *   CTA section #1D1D1B
+ *     Title "Get free professional advice on choosing a car"
+ *     Inputs full-width 327×44, button 328×45 yellow
+ *   Footer
+ * ========================================================================== */
+@media (max-width: 768px) {
+  :root { --bibi-container-pad: 20px; }
+
+  /* ── Hero: всё центрировано, breadcrumb mute / yellow ─────────────────── */
+  .bibi-about .bibi-hero {
+    padding: 24px 16px 24px;
+    text-align: center;
+  }
+  .bibi-about .bibi-breadcrumb {
+    font-size: 13px;
+    text-align: left;
+  }
+  .bibi-about .bibi-hero__title {
+    margin-top: 24px;
+    font-size: 36px;
+    line-height: 1;
+    text-align: center;
+    color: var(--bibi-white);
+  }
+  .bibi-about .bibi-hero__tagline {
+    margin: 28px 0 0;
+    padding: 0 16px;
+    font-size: 24px;
+    line-height: 1.05;
+    text-align: center;
+    color: var(--bibi-yellow);
+  }
+
+  /* ── Frame 1 — photo (wide) above, text below, photo (portrait) below ── */
+  .bibi-about .bibi-frame-1 { padding: 0 0 32px; }
+  .bibi-about .bibi-frame-1__canvas {
+    aspect-ratio: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding: 0;
+  }
+  .bibi-about .bibi-frame-1__photo--big,
+  .bibi-about .bibi-frame-1__photo--small,
+  .bibi-about .bibi-frame-1__text {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+  }
+  /* IMG-0463 wide: 70% width, centered */
+  .bibi-about .bibi-frame-1__photo--big {
+    width: 70%;
+    aspect-ratio: 252 / 189;
+  }
+  /* Text "Our company..." — white with yellow accent, centered */
+  .bibi-about .bibi-frame-1__text {
+    width: calc(100% - 32px);
+    margin: 0 16px;
+    font-size: 18px;
+    line-height: 1.15;
+    text-align: center;
+    color: var(--bibi-white);
+  }
+  /* IMG-0450 portrait: 44% width, centered */
+  .bibi-about .bibi-frame-1__photo--small {
+    width: 44%;
+    aspect-ratio: 158 / 224;
+    align-self: center;
+    max-width: none;
+  }
+
+  /* ── Frame 2 — headline, portrait photo, text, big wide photo ─────────── */
+  .bibi-about .bibi-frame-2 { padding: 0 0 48px; }
+  .bibi-about .bibi-frame-2__canvas {
+    aspect-ratio: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding: 0;
+  }
+  .bibi-about .bibi-frame-2__headline,
+  .bibi-about .bibi-frame-2__photo--small,
+  .bibi-about .bibi-frame-2__text,
+  .bibi-about .bibi-frame-2__photo--big {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+  }
+  .bibi-about .bibi-frame-2__headline {
+    width: calc(100% - 32px);
+    margin: 0 16px;
+    font-size: 22px;
+    line-height: 1.1;
+    text-align: center;
+    color: var(--bibi-white);
+  }
+  /* image-84 portrait: 44% centered */
+  .bibi-about .bibi-frame-2__photo--small {
+    width: 44%;
+    aspect-ratio: 158 / 210;
+    align-self: center;
+    max-width: none;
+  }
+  .bibi-about .bibi-frame-2__text {
+    width: calc(100% - 32px);
+    margin: 0 16px;
+    font-size: 16px;
+    line-height: 1.15;
+    text-align: center;
+    color: var(--bibi-white);
+  }
+  /* IMG-8461 wide: full width minus 16px each side */
+  .bibi-about .bibi-frame-2__photo--big {
+    width: calc(100% - 32px);
+    margin: 0 16px;
+    aspect-ratio: 328 / 184;
+  }
+
+  /* ── CTA — form full-width, yellow submit ─────────────────────────────── */
+  .bibi-about .bibi-cta {
+    padding: 48px 16px 48px;
+  }
+  .bibi-about .bibi-cta__inner {
+    gap: 48px;
+  }
+  .bibi-about .bibi-cta__title {
+    font-size: 28px;
+    gap: 6px;
+  }
+  .bibi-about .bibi-form {
+    width: 100%;
+    gap: 32px;
+  }
+  .bibi-about .bibi-form__fields { gap: 24px; }
+  .bibi-about .bibi-form__field input {
+    height: 44px;
+    font-size: 14px;
+  }
+  .bibi-about .bibi-form__submit {
+    height: 45px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  /* Quick-call card — narrower mobile padding, yellow border, centered */
+  .bibi-about .bibi-quickcall {
+    width: 100%;
+    padding: 24px 16px;
+    gap: 18px;
+    border-radius: 8px;
+  }
+  .bibi-about .bibi-quickcall h3 { font-size: 20px; }
+  .bibi-about .bibi-quickcall a { font-size: 18px; letter-spacing: 0.2px; }
+}
+
+@media (max-width: 480px) {
+  .bibi-about .bibi-hero__title { font-size: 32px; }
+  .bibi-about .bibi-hero__tagline { font-size: 22px; padding: 0 8px; }
+  .bibi-about .bibi-frame-1__text { font-size: 17px; }
+  .bibi-about .bibi-frame-2__headline { font-size: 20px; }
+  .bibi-about .bibi-frame-2__text { font-size: 15px; }
+  .bibi-about .bibi-cta__title { font-size: 26px; }
+  .bibi-about .bibi-quickcall { padding: 20px 12px; gap: 14px; }
+  .bibi-about .bibi-quickcall h3 { font-size: 18px; }
+  .bibi-about .bibi-quickcall a { font-size: 17px; }
+}

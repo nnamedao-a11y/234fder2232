@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>BIBI Cars</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-soft: #f7f7f8;
+      --bg-card: #ffffff;
+      --border: #e6e6ea;
+      --border-strong: #18181b;
+      --text: #18181b;
+      --text-soft: #52525b;
+      --text-muted: #a1a1aa;
+      --brand: #fcae1e;
+      --brand-dark: #d18e0a;
+      --ok: #16a34a;
+      --warn: #d97706;
+      --bad: #dc2626;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 380px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* ── Header ────────────────────────────────────── */
+    .header {
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg);
+    }
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 11px;
+      background: #ffffff;
+      border: 1.5px solid #18181B;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+      position: relative;
+    }
+    .brand-mark .b-letter {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      font-size: 28px;
+      font-weight: 900;
+      color: #18181B;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      /* perfectly center using flex parent + zero offset */
+      display: block;
+      transform: translateY(-1px); /* optical balance */
+    }
+    .brand-text { line-height: 1.2; }
+    .brand-text .name {
+      font-weight: 800;
+      font-size: 17px;
+      letter-spacing: -0.01em;
+    }
+    .brand-text .tagline {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ── Tabs ──────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .tab {
+      flex: 1;
+      padding: 11px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-soft);
+      text-align: center;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active {
+      color: var(--text);
+      border-bottom-color: var(--brand);
+    }
+
+    .pane { display: none; padding: 16px; }
+    .pane.active { display: block; }
+
+    /* ── Status hero ───────────────────────────────── */
+    .status-hero {
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--bg-soft);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .status-hero.ok   { background: #ecfdf3; border-color: #c7f0d5; }
+    .status-hero.warn { background: #fff7ed; border-color: #fde7c4; }
+    .status-hero.bad  { background: #fef2f2; border-color: #fecaca; }
+    .status-hero .pulse {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 4px;
+      background: var(--text-muted);
+    }
+    .status-hero.ok .pulse  { background: var(--ok); box-shadow: 0 0 0 4px #16a34a22; }
+    .status-hero.warn .pulse{ background: var(--warn); box-shadow: 0 0 0 4px #d9770622; }
+    .status-hero.bad .pulse { background: var(--bad); box-shadow: 0 0 0 4px #dc262622; }
+    .status-hero .title {
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: -0.005em;
+    }
+    .status-hero .desc {
+      font-size: 12px;
+      color: var(--text-soft);
+      margin-top: 4px;
+    }
+    .status-hero .fix {
+      font-size: 12px;
+      color: var(--text);
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #00000010;
+    }
+    .status-hero .fix b { color: var(--text); }
+
+    /* ── Source rows ───────────────────────────────── */
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin: 14px 0 8px;
+    }
+    .source-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      margin-bottom: 8px;
+    }
+    .source-row .left { display: flex; align-items: center; gap: 10px; }
+    .source-row .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+    .source-row .dot.ok   { background: var(--ok); }
+    .source-row .dot.warn { background: var(--warn); }
+    .source-row .dot.bad  { background: var(--bad); }
+    .source-row .label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .source-row .meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+    .source-row .pill {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #e4e4e720;
+      color: var(--text-muted);
+    }
+    .source-row .pill.ok   { background: #16a34a18; color: var(--ok); }
+    .source-row .pill.warn { background: #d9770618; color: var(--warn); }
+    .source-row .pill.bad  { background: #dc262618; color: var(--bad); }
+
+    /* ── Config panel ──────────────────────────────── */
+    .config-block {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+      background: var(--bg-card);
+    }
+    .config-block .label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+    }
+    .row input {
+      flex: 1;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 10px;
+      font-size: 12px;
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .row input:focus { outline: none; border-color: var(--border-strong); background: white; }
+    .btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--text);
+      color: white;
+      transition: background 0.15s;
+    }
+    .btn:hover { background: #000; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-yellow {
+      background: var(--brand);
+      color: var(--text);
+    }
+    .btn-yellow:hover { background: var(--brand-dark); color: white; }
+    .hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    /* ── Help / instructions ───────────────────────── */
+    .help-card {
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .help-card h4 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .help-card p, .help-card li {
+      font-size: 12px;
+      color: var(--text-soft);
+      line-height: 1.55;
+    }
+    .help-card ol, .help-card ul {
+      padding-left: 18px;
+      margin-top: 6px;
+    }
+    .help-card li { margin-bottom: 4px; }
+    .help-card code {
+      background: white;
+      border: 1px solid var(--border);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+    }
+    .legend {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .legend .item {
+      display: flex;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-soft);
+      align-items: flex-start;
+    }
+    .legend .item .swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+    .legend .ok .swatch { background: var(--ok); }
+    .legend .warn .swatch { background: var(--warn); }
+    .legend .bad .swatch { background: var(--bad); }
+
+    /* ── Toast ─────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 14px;
+      transform: translateX(-50%);
+      background: var(--text);
+      color: white;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px #00000040;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+
+    /* ── Footer ────────────────────────────────────── */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 11px 16px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .footer a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="brand-mark">
+      <span class="b-letter">B</span>
+    </div>
+    <div class="brand-text">
+      <div class="name">BIBI Cars</div>
+      <div class="tagline">Помічник пошуку авто з аукціонів</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-pane="status">Стан</button>
+    <button class="tab" data-pane="settings">Налаштування</button>
+    <button class="tab" data-pane="help">Довідка</button>
+  </div>
+
+  <!-- ────────────── PANE: STATUS ─────────────── -->
+  <div class="pane active" id="pane-status">
+    <div class="status-hero" id="hero">
+      <div class="pulse"></div>
+      <div style="flex:1;">
+        <div class="title" id="hero-title">Перевірка стану…</div>
+        <div class="desc" id="hero-desc">Зачекайте кілька секунд, поки помічник зв'яжеться з системою.</div>
+        <div class="fix" id="hero-fix" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>Підключені аукціонні сайти</span>
+      <button id="refresh-status" type="button" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;color:var(--text-soft);cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;">
+        ↻ Оновити
+      </button>
+    </div>
+    <div id="sources">
+      <div class="source-row" data-src="poctra">
+        <div class="left">
+          <span class="dot"></span>
+          <div>
+            <div class="label">poctra.com</div>
+            <div class="meta">Архів історичних лотів</div>
+          </div>
+        </div>
+        <span class="pill">перевірка…</span>
+      </div>
+      <div class="source-row" data-src="carsfromwest">
+        <div class="left">
+          <span class="dot"></span>
+          <div>
+            <div class="label">carsfromwest.com</div>
+            <div class="meta">Каталог дилера</div>
+          </div>
+        </div>
+        <span class="pill">перевірка…</span>
+      </div>
+      <div class="source-row" data-src="autoauctionhistory">
+        <div class="left">
+          <span class="dot"></span>
+          <div>
+            <div class="label">autoauctionhistory.com</div>
+            <div class="meta">Історія аукціонів</div>
+          </div>
+        </div>
+        <span class="pill">перевірка…</span>
+      </div>
+      <div class="source-row" data-src="salvagebid">
+        <div class="left">
+          <span class="dot"></span>
+          <div>
+            <div class="label">salvagebid.com</div>
+            <div class="meta">Активні торги</div>
+          </div>
+        </div>
+        <span class="pill">перевірка…</span>
+      </div>
+    </div>
+
+    <!-- Explanation about the probe results -->
+    <div style="margin-top:10px;padding:10px 12px;background:#fff7ed;border:1px solid #fde7c4;border-radius:10px;font-size:11px;color:#7c2d12;line-height:1.55;">
+      <b style="color:#7c2d12;">Чому деякі сайти показують «недоступний» або «CF блокує»?</b><br>
+      Це <b>браузерна перевірка</b> зв'язку (no-cors fetch). Cloudflare на деяких сайтах
+      (poctra, carsfromwest) блокує такі запити заздалегідь. <b>Парсер працює інакше</b>:
+      content script розширення запускається <b>в контексті самої сторінки</b> та
+      обходить CF Bot Management — навіть якщо тут «червоний», парсер у CRM
+      продовжує отримувати дані.
+    </div>
+  </div>
+
+  <!-- ────────────── PANE: SETTINGS ─────────────── -->
+  <div class="pane" id="pane-settings">
+    <div class="config-block">
+      <div class="label">Адреса CRM</div>
+      <div class="row">
+        <input type="text" id="server-url" placeholder="https://...">
+        <button class="btn" id="save-url">Зберегти</button>
+      </div>
+      <p class="hint">
+        Куди помічник надсилає знайдені дані. Має співпадати з адресою
+        вашого BIBI CRM. Зазвичай вже заповнено правильно.
+      </p>
+    </div>
+
+    <div class="config-block">
+      <div class="label">Назва цього комп'ютера</div>
+      <div class="row">
+        <input type="text" id="client-label" placeholder="напр. ноутбук-офіс">
+        <button class="btn" id="save-label">Зберегти</button>
+      </div>
+      <p class="hint">
+        Допомагає адміну розрізняти комп'ютери в дашборді. Можна залишити
+        порожнім.
+      </p>
+    </div>
+
+    <div class="config-block">
+      <div class="label">Ключ доступу до CRM</div>
+      <div class="row">
+        <input type="password" id="client-secret" placeholder="отримайте у адміна">
+        <button class="btn" id="save-secret">Зберегти</button>
+      </div>
+      <p class="hint">
+        Захищає з'єднання між помічником та CRM. Спитайте у адміна BIBI —
+        вони пришлють вам ключ. Без ключа дані не зберігаються.
+      </p>
+    </div>
+  </div>
+
+  <!-- ────────────── PANE: HELP ─────────────── -->
+  <div class="pane" id="pane-help">
+    <div class="help-card">
+      <h4>Що робить цей помічник?</h4>
+      <p>
+        BIBI Cars автоматично шукає інформацію по VIN-кодах на чотирьох
+        аукціонних сайтах та надсилає результати у вашу CRM. Працює у
+        фоновому режимі — нічого натискати не потрібно. Достатньо, щоб
+        браузер був відкритий.
+      </p>
+    </div>
+
+    <div class="help-card">
+      <h4>Як його запустити (1 раз)</h4>
+      <ol>
+        <li>Перейдіть у <b>Налаштування</b> (вкладка вище).</li>
+        <li>
+          Перевірте, що <b>Адреса CRM</b> заповнена правильно
+          (зазвичай — так).
+        </li>
+        <li>Введіть <b>Назву комп'ютера</b> — будь-яку.</li>
+        <li>
+          Введіть <b>Ключ доступу</b> — отримайте у адміна BIBI.
+        </li>
+        <li>Натисніть <b>Зберегти</b> у кожному полі.</li>
+        <li>
+          Поверніться на вкладку <b>Стан</b> — індикатор повинен стати
+          зеленим протягом хвилини.
+        </li>
+      </ol>
+    </div>
+
+    <div class="help-card">
+      <h4>Що означають кольори стану</h4>
+      <div class="legend">
+        <div class="item ok">
+          <span class="swatch"></span>
+          <div>
+            <b>Зелений — все добре.</b> Помічник з'єднаний з CRM, сайти
+            відповідають, дані передаються.
+          </div>
+        </div>
+        <div class="item warn">
+          <span class="swatch"></span>
+          <div>
+            <b>Жовтий — увага.</b> Деякі сайти тимчасово недоступні
+            (Cloudflare блокує, або сайт лежить). Зачекайте 1-2 хвилини
+            або відкрийте сайт вручну.
+          </div>
+        </div>
+        <div class="item bad">
+          <span class="swatch"></span>
+          <div>
+            <b>Червоний — потрібна дія.</b> Помічник не може з'єднатись
+            з CRM. Перевірте Налаштування або зверніться до адміна.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <h4>Інструкції за ролями</h4>
+      <p style="margin-bottom: 8px;"><b>Менеджер:</b></p>
+      <ul>
+        <li>Просто залиште розширення увімкненим, браузер відкритим.</li>
+        <li>Якщо стан жовтий або червоний — повідомте адміна.</li>
+        <li>Не закривайте вкладки, які відкриваються автоматично — вони закриваються самі за 8 секунд.</li>
+      </ul>
+      <p style="margin-top: 12px; margin-bottom: 8px;"><b>Адмін:</b></p>
+      <ul>
+        <li>
+          Видайте ключ доступу (HMAC-секрет) кожному менеджеру з
+          BIBI CRM → <code>/admin/parser</code>.
+        </li>
+        <li>
+          Стежте за дашбордом
+          <code>/admin/parser</code> — там видно скільки помічників
+          онлайн та який success rate.
+        </li>
+        <li>
+          Для надійності встановіть розширення мінімум на 2-х
+          комп'ютерах (наприклад: ваш ноутбук + сервер з Chrome).
+        </li>
+      </ul>
+    </div>
+
+    <div class="help-card">
+      <h4>Потрібна допомога?</h4>
+      <p>
+        Зайдіть в CRM →
+        <a href="#" id="open-parser-link" style="color:var(--text); text-decoration: underline; font-weight: 600;">Контроль парсера</a>,
+        там видно повний стан системи та поради як виправити проблеми.
+      </p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a id="open-crm" href="#" target="_blank">Відкрити CRM</a>
+    &nbsp;·&nbsp;
+    BIBI Cars
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

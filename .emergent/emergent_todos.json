@@ -1,0 +1,30 @@
+[
+  {
+    "content": "1. Atomic CAS lock on auction_won (auction_locked) — prevents double-creation under race",
+    "status": "in_progress"
+  },
+  {
+    "content": "2. is_locked_after_win flag + _ensure_not_locked() guard on create_deposit, confirm_payment, edit endpoints",
+    "status": "pending"
+  },
+  {
+    "content": "3. FX snapshot (fx_rate_snapshot) explicit on deal/contract/invoice",
+    "status": "pending"
+  },
+  {
+    "content": "4. Deposit→Invoice hard link (invoice.deposit_id, invoice.deposit_applied_eur)",
+    "status": "pending"
+  },
+  {
+    "content": "5. Audit log collection (audit_events) + _audit() helper, wired into auction_won + deposit + contract events",
+    "status": "pending"
+  },
+  {
+    "content": "Tests: extend test_p13_auction.py with 5 hardening scenarios (race-lock, post-win lock, fx persistence, deposit linkage, audit trail)",
+    "status": "pending"
+  },
+  {
+    "content": "Run all tests + verify no regression on P1.1",
+    "status": "pending"
+  }
+]

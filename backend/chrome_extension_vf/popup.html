@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>BIBI Vessel Sync</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      width: 380px;
+      padding: 18px 18px 16px;
+      background: #F7F7F8;
+      color: #18181B;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── Header ─── */
+    .hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .hdr-left { display: flex; align-items: center; gap: 10px; }
+    .logo { width: 32px; height: 32px; border-radius: 9px; object-fit: contain; background: #18181B; display: block; }
+    h1 { font-size: 15px; font-weight: 700; margin: 0; color: #18181B; letter-spacing: -0.01em; line-height: 1.2; }
+    .ver { color: #A1A1AA; font-size: 10px; font-weight: 600; }
+    .subtitle { font-size: 11px; color: #71717A; margin: 2px 0 14px 42px; }
+
+    /* ─── Card ─── */
+    .card {
+      background: #FFFFFF;
+      border: 1px solid #E4E4E7;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .card-title {
+      font-size: 10px; font-weight: 700;
+      color: #71717A; letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-title .hint { color: #A1A1AA; font-weight: 500; text-transform: none; letter-spacing: 0; font-size: 10px; }
+    .row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid #F4F4F5;
+      font-size: 12px;
+    }
+    .row:last-child { border-bottom: 0; padding-bottom: 2px; }
+    .row:first-child { padding-top: 2px; }
+    .row .k { color: #71717A; font-weight: 500; }
+    .row .v { color: #18181B; font-weight: 600; max-width: 62%; text-align: right; word-break: break-all; }
+    .v.muted { color: #A1A1AA; font-weight: 500; }
+
+    /* ─── URL input card ─── */
+    .url-wrap { display: flex; align-items: center; gap: 8px; }
+    .url-input {
+      flex: 1;
+      border: 1px solid #E4E4E7;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #18181B;
+      background: #FAFAFA;
+      font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+      outline: none;
+      transition: border-color .15s ease, background .15s ease;
+      min-width: 0;
+    }
+    .url-input:focus { border-color: #2563EB; background: #FFFFFF; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+    .url-input::placeholder { color: #A1A1AA; font-family: inherit; }
+    .url-input.ok   { border-color: #86EFAC; background: #F0FDF4; }
+    .url-input.err  { border-color: #FCA5A5; background: #FEF2F2; }
+    .url-status { font-size: 10px; font-weight: 600; letter-spacing: 0.03em; padding: 2px 7px; border-radius: 999px; white-space: nowrap; }
+    .url-status.ok  { color: #15803D; background: #DCFCE7; }
+    .url-status.err { color: #B91C1C; background: #FEE2E2; }
+    .url-status.saving { color: #1D4ED8; background: #DBEAFE; }
+    .url-status.idle { color: #71717A; background: #F4F4F5; }
+    .url-hint { font-size: 10px; color: #A1A1AA; margin-top: 6px; line-height: 1.4; }
+    .url-hint code { background: #F4F4F5; padding: 1px 5px; border-radius: 4px; font-size: 10px; color: #52525B; }
+
+    /* ─── Status badges ─── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 999px;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .b-on       { background: #DCFCE7; color: #15803D; }
+    .b-off      { background: #FEE2E2; color: #B91C1C; }
+    .b-paused   { background: #FFEDD5; color: #C2410C; }
+    .b-degraded { background: #FEF3C7; color: #B45309; }
+    .b-unknown  { background: #F4F4F5; color: #71717A; }
+
+    /* Inline explanation shown under the Status card, color-matched to the badge. */
+    .status-hint {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      line-height: 1.5;
+      border: 1px solid transparent;
+    }
+    .status-hint.on       { background: #F0FDF4; color: #166534; border-color: #BBF7D0; }
+    .status-hint.off      { background: #FEF2F2; color: #991B1B; border-color: #FECACA; }
+    .status-hint.paused   { background: #FFF7ED; color: #9A3412; border-color: #FED7AA; }
+    .status-hint.degraded { background: #FFFBEB; color: #92400E; border-color: #FDE68A; }
+    .status-hint.unknown  { background: #FAFAFA; color: #52525B; border-color: #E4E4E7; }
+    .status-hint b { font-weight: 700; }
+    .status-hint .todo { margin: 6px 0 0 0; padding-left: 18px; }
+    .status-hint .todo li { margin: 2px 0; }
+
+    /* ─── Buttons ─── */
+    .actions { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    button {
+      width: 100%;
+      border: 0;
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform .04s ease, background .15s ease, box-shadow .15s ease, opacity .15s ease;
+      font-family: inherit;
+    }
+    button:active:not(:disabled) { transform: translateY(1px); }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    button svg { width: 14px; height: 14px; }
+
+    #sync { background: #2563EB; box-shadow: 0 1px 2px rgba(37,99,235,.25); }
+    #sync:hover:not(:disabled) { background: #1D4ED8; }
+    #tick { background: #10B981; box-shadow: 0 1px 2px rgba(16,185,129,.25); }
+    #tick:hover:not(:disabled) { background: #059669; }
+    #test {
+      background: #FFFFFF; color: #18181B; border: 1px solid #E4E4E7; box-shadow: none;
+    }
+    #test:hover:not(:disabled) { background: #F4F4F5; border-color: #D4D4D8; }
+
+    /* ─── Message ─── */
+    .msg {
+      font-size: 11px;
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      line-height: 1.45;
+      border: 1px solid transparent;
+    }
+    .msg.ok   { background: #F0FDF4; color: #15803D; border-color: #BBF7D0; }
+    .msg.err  { background: #FEF2F2; color: #B91C1C; border-color: #FECACA; }
+    .msg.warn { background: #FFFBEB; color: #B45309; border-color: #FDE68A; }
+
+    /* ─── Footer ─── */
+    .footer {
+      margin-top: 14px;
+      font-size: 10px;
+      color: #A1A1AA;
+      text-align: center;
+      padding-top: 10px;
+      border-top: 1px solid #E4E4E7;
+      line-height: 1.6;
+    }
+    .footer b { color: #52525B; font-weight: 600; }
+
+    /* ─── Spinner ─── */
+    .spinner {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.35);
+      border-top-color: #fff;
+      animation: spin 0.8s linear infinite;
+    }
+    .spinner.dark { border-color: rgba(0,0,0,.2); border-top-color: #18181B; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="hdr">
+    <div class="hdr-left">
+      <img class="logo" src="icons/icon128.png" alt="BIBI" />
+      <h1>BIBI Vessel Sync</h1>
+    </div>
+    <span class="ver" id="ver">v3.1</span>
+  </div>
+  <div class="subtitle">Живой трекинг судов через vesselfinder.com</div>
+
+  <!-- ─── CRM URL ─── -->
+  <div class="card">
+    <div class="card-title">
+      <span>Адрес CRM</span>
+      <span class="hint">сохраняется автоматически</span>
+    </div>
+    <div class="url-wrap">
+      <input
+        id="backend-url"
+        class="url-input"
+        type="url"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="https://your-crm.example.com"
+      />
+      <span id="url-status" class="url-status idle">—</span>
+    </div>
+    <div class="url-hint">
+      Вставьте адрес вашего CRM (например <code>https://crm.bibi.cars</code>). Сохранится сразу после ввода.
+    </div>
+  </div>
+
+  <!-- ─── Status ─── -->
+  <div class="card">
+    <div class="card-title"><span>Состояние</span></div>
+    <div class="row">
+      <span class="k">Сессия VesselFinder</span>
+      <span id="status-badge" class="badge b-unknown">—</span>
+    </div>
+    <div class="row">
+      <span class="k">Cookies переданы в CRM</span>
+      <span class="v" id="cookies">—</span>
+    </div>
+    <div class="row">
+      <span class="k">Последняя синхронизация</span>
+      <span class="v muted" id="synced">—</span>
+    </div>
+    <div id="status-hint" class="status-hint" style="display:none"></div>
+  </div>
+
+  <!-- ─── Tracker stats ─── -->
+  <div class="card">
+    <div class="card-title"><span>Автоматический трекинг · каждые 2 мин</span></div>
+    <div class="row">
+      <span class="k">Последнее обновление</span>
+      <span class="v muted" id="last-tick">—</span>
+    </div>
+    <div class="row">
+      <span class="k">Обработано кораблей</span>
+      <span class="v" id="tick-stats">—</span>
+    </div>
+    <div class="row">
+      <span class="k">Успешных совпадений</span>
+      <span class="v" id="success-rate">—</span>
+    </div>
+  </div>
+
+  <!-- ─── Actions ─── -->
+  <div class="actions">
+    <button id="sync" disabled title="Считать cookies vesselfinder.com и отправить их в CRM">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M20.49 15A9 9 0 0 1 5.64 18.36L1 14"/></svg>
+      Подключить к CRM (сохранить cookies)
+    </button>
+    <button id="tick" disabled title="Запустить обновление позиций прямо сейчас">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="currentColor" stroke="none"/></svg>
+      Обновить позиции сейчас
+    </button>
+    <button id="test" disabled title="Проверить подключение к CRM">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg>
+      Проверить подключение к CRM
+    </button>
+  </div>
+
+  <div id="msg" class="msg" style="display:none"></div>
+
+  <div class="footer">
+    1. Укажите адрес CRM выше.<br/>
+    2. Откройте <b>vesselfinder.com</b> и войдите в аккаунт.<br/>
+    3. Нажмите «<b>Подключить к CRM</b>» — дальше всё работает само.
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

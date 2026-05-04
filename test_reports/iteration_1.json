@@ -1,0 +1,52 @@
+{
+  "summary": "Completed backend testing for Stripe payment integration. Tested 10 endpoints covering public config, checkout session creation, webhook processing, admin payment management (list/stats/detail/sync/refund), and event logging. 9/10 tests passed (90% success rate). One critical route ordering bug found in /recent-events endpoint.",
+  
+  "backend_issues": {
+    "critical_bugs": [
+      {
+        "endpoint": "/api/admin/payments/recent-events",
+        "issue": "Route ordering bug - /recent-events route defined AFTER /{payment_id} route (line 12682 after line 12584). FastAPI matches 'recent-events' as a payment_id parameter, causing 404 'Payment not found' error.",
+        "impact": "Master admin cannot view recent webhook events log",
+        "fix_priority": "HIGH",
+        "fix_required": "Move line 12682 (GET /api/admin/payments/recent-events) BEFORE line 12584 (GET /api/admin/payments/{payment_id}) in server.py"
+      }
+    ],
+    "flaky_endpoints": []
+  },
+  
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  
+  "passed_tests": [
+    "Admin authentication (login with master_admin credentials)",
+    "GET /api/stripe/public-config - Returns enabled=true, displayMethods with card/apple_pay/google_pay/link, automaticPaymentMethods=true, currency=usd, publishableKey present",
+    "POST /api/stripe/create-checkout-session - Creates session with amount=100, returns sessionId and url, persists to db.payment_sessions",
+    "POST /api/stripe/webhook - Accepts payment_intent.succeeded event, returns {received:true, type:...}, persists to db.payments and db.stripe_events",
+    "GET /api/admin/payments?days=30 - Returns total + items array (found 6 payments)",
+    "GET /api/admin/payments/stats?days=30 - Returns totalAmount, succeeded, failed, pending, refunded, byMethod, byCurrency, daily aggregations",
+    "GET /api/admin/payments/{paymentIntentId} - Returns payment + stripe (live API) for real payment ID",
+    "POST /api/admin/payments/sync - Pulls recent PaymentIntents from Stripe, returns {success, synced, total}",
+    "POST /api/admin/payments/{id}/refund - Route correctly validates payment existence (returns 404 for non-existent payment)"
+  ],
+  
+  "test_report_links": [
+    "/app/backend/backend_test.py"
+  ],
+  
+  "success_percentage": {
+    "backend": "90% (9/10 tests passed)",
+    "frontend": "Not tested (backend-only testing requested)"
+  },
+  
+  "action_item_for_main_agent": "Fix route ordering bug: Move GET /api/admin/payments/recent-events route definition (line 12682) BEFORE GET /api/admin/payments/{payment_id} route (line 12584) in server.py. This will allow the /recent-events endpoint to work correctly instead of being matched as a payment_id parameter.",
+  
+  "updated_files": [
+    "/app/backend/backend_test.py"
+  ],
+  
+  "should_call_test_agent_after_fix": "true",
+  "should_main_agent_test_itself": "false"
+}

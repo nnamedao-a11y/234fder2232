@@ -1,0 +1,179 @@
+/* =============================================================================
+ * BIBI Cars — Home page (clean landing) styles
+ * ========================================================================== */
+
+.bibi-home {
+  width: 100%;
+  background: var(--bibi-black);
+  color: var(--bibi-white);
+}
+
+/* ─── Hero ─────────────────────────────────────────────────────────────── */
+
+.bibi-home__hero {
+  position: relative;
+  width: 100%;
+  min-height: clamp(560px, 80vh, 880px);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.bibi-home__hero-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+}
+
+.bibi-home__hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.85) 0%,
+    rgba(0, 0, 0, 0.55) 45%,
+    rgba(0, 0, 0, 0.15) 100%
+  );
+  z-index: 1;
+}
+
+.bibi-home__hero-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding-top: clamp(40px, 6vw, 80px);
+  padding-bottom: clamp(40px, 6vw, 80px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 2.5vw, 40px);
+}
+
+.bibi-home__regions {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 0.8vw, 14px);
+  font-size: clamp(13px, 0.94vw, 18px);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bibi-white);
+}
+.bibi-home__regions-sep { color: var(--bibi-yellow); }
+
+.bibi-home__title {
+  margin: 0;
+  font-family: var(--bibi-font);
+  font-weight: 800;
+  font-size: clamp(40px, 6.2vw, 120px);
+  line-height: 0.98;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2px, 0.3vw, 8px);
+}
+.bibi-home__title-yellow { color: var(--bibi-yellow); }
+.bibi-home__title-white { color: var(--bibi-white); }
+
+.bibi-home__bullets {
+  margin: clamp(12px, 1.5vw, 24px) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(20px, 2.6vw, 56px);
+  font-size: clamp(13px, 0.94vw, 18px);
+  color: var(--bibi-white);
+}
+
+.bibi-home__actions {
+  margin-top: clamp(20px, 2.5vw, 40px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.bibi-home__cta {
+  height: 52px;
+  padding: 0 32px;
+  font-size: 14px;
+}
+
+/* ─── Pitch ────────────────────────────────────────────────────────────── */
+
+.bibi-home__pitch {
+  background: var(--bibi-black);
+  padding: clamp(60px, 8vw, 140px) 0 clamp(80px, 11vw, 180px);
+}
+
+.bibi-home__pitch-title {
+  margin: 0 auto;
+  max-width: 1100px;
+  text-align: center;
+  font-family: var(--bibi-font);
+  font-weight: 700;
+  font-size: clamp(26px, 3.2vw, 56px);
+  line-height: 1.1;
+  color: var(--bibi-white);
+}
+
+.bibi-home__pitch-text {
+  margin: clamp(20px, 2.5vw, 40px) auto 0;
+  max-width: 720px;
+  text-align: center;
+  font-size: clamp(15px, 1.1vw, 20px);
+  line-height: 1.5;
+  color: var(--bibi-text-mute-2);
+}
+.bibi-home__pitch-link {
+  color: var(--bibi-yellow);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.bibi-home__pitch-link:hover { filter: brightness(1.1); }
+
+/* ─── Mobile (≤768px) ──────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .bibi-home__hero {
+    min-height: 560px;
+  }
+  .bibi-home__hero-overlay {
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0.85) 100%
+    );
+  }
+  .bibi-home__hero-inner {
+    padding-top: 32px;
+    padding-bottom: 40px;
+    gap: 18px;
+  }
+  .bibi-home__regions { font-size: 12px; gap: 8px; }
+  .bibi-home__title { font-size: 38px; line-height: 1; }
+  .bibi-home__bullets {
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+  }
+  .bibi-home__actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .bibi-home__cta {
+    width: 100%;
+    height: 48px;
+  }
+
+  .bibi-home__pitch { padding: 48px 16px 64px; }
+  .bibi-home__pitch-title { font-size: 24px; line-height: 1.15; }
+  .bibi-home__pitch-text { font-size: 14px; }
+}
+
+@media (max-width: 480px) {
+  .bibi-home__title { font-size: 32px; }
+  .bibi-home__pitch-title { font-size: 22px; }
+}

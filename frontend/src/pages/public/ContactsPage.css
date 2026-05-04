@@ -1,0 +1,336 @@
+/* =============================================================================
+ * BIBI Cars — Contacts page (V5 — EXACT Figma port)
+ *
+ * Source of truth: /tmp/contacts2/app/contacts.tsx + /tmp/contacts2/public/weui-location-filled.svg
+ *
+ * EXACT Figma values (1920px viewport):
+ *   Pin SVG       : 583.6 × 583.6
+ *   Tagline       : 460 × 94 px, font 40 / 99.9% / 700
+ *   Pin head outer: ~389 px (66.6% of pin)
+ *   Hollow ring center: (291.8, 243.18) → (50%, 41.6%) of pin
+ *
+ * Derived ratios (preserved across responsive scaling):
+ *   Tagline width  / Pin width = 460  / 583.6 = 78.82%
+ *   Font size      / Pin width =  40  / 583.6 =  6.85% (= 2.083vw of 1920)
+ *   Tagline vert   / Pin height = 41.6% (hollow ring center)
+ *
+ * Overflow check at 583.6 pin:
+ *   tagline 460 vs pin head 389 → (460-389)/2 = 35.5 px per side
+ *   at font 40, char width ≈ 18-20 px → 35.5 / 18 ≈ 1.97 → ~2 letters per side ✓
+ * ========================================================================== */
+
+/* ─── Hero ─────────────────────────────────────────────────────────────── */
+
+.bibi-contacts-hero {
+  padding-top: clamp(40px, 4.5vw, 87px);
+  padding-bottom: 0;
+  position: relative;
+}
+
+.bibi-breadcrumb__sep {
+  color: var(--bibi-text-mute);
+  margin: 0 4px;
+}
+.bibi-breadcrumb__current {
+  color: var(--bibi-yellow);
+  text-transform: lowercase;
+}
+
+/* ─── Body ─────────────────────────────────────────────────────────────── */
+
+.bibi-contacts {
+  background: transparent;
+  position: relative;
+  padding: 0 0 clamp(60px, 8vw, 150px);
+  margin-top: 0;
+  z-index: 0;
+}
+
+/* ─── PIN BLOCK ─────────────────────────────────────────────────────────
+ * Outer .bibi-contacts__pin-block — flex container, centers inner on page.
+ * Inner .bibi-contacts__pin-inner  — square box (583.6×583.6 max).
+ *      • <img.bibi-contacts__pin>      — fills box behind text (z=0)
+ *      • <h2.bibi-contacts__tagline>   — abs centered on hollow ring (z=2)
+ * ────────────────────────────────────────────────────────────────────── */
+
+.bibi-contacts__pin-block {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  /* Figma reference geometry:
+     • h1 ↔ pin section gap = 188.3, pin extends 226.3 above section
+       → pin head top = h1_bottom - 38 (small overlap)
+     • pin extends 263.3 below section, photo section gap = 263.2
+       → pin tip ≈ photo top
+     User feedback: "lower the marker, it's too high".
+     Compromise: zero overlap with h1 (pin starts cleanly below title). */
+  margin: 0 0 0;
+  overflow: visible;
+}
+
+.bibi-contacts__pin-inner {
+  position: relative;
+  /* MASTER dimension — pin SVG width.
+     At 1920: 30.4vw = 583.7 ≈ 583.6 (Figma exact)
+     Compact responsive scaling preserves Figma proportions. */
+  width: clamp(380px, 30.4vw, 583.6px);
+  aspect-ratio: 583.6 / 583.6;
+  overflow: visible;
+}
+
+.bibi-contacts__pin {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.bibi-contacts__tagline {
+  position: absolute;
+
+  /* Width = EXACT Figma ratio 460 / 583.6 = 78.82% */
+  width: 78.82%;
+
+  /* Center horizontally + align vertically on hollow ring center */
+  left: 50%;
+  top: 41.6%;
+  transform: translate(-50%, -50%);
+
+  margin: 0;
+  text-align: center;
+
+  /* Font = EXACT Figma ratio 40 / 583.6 = 6.85% of pin width
+     2.083vw of 1920px = 40px; floor 22, ceil 40 */
+  font-size: clamp(22px, 2.083vw, 40px);
+  line-height: 0.999;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--bibi-yellow);
+  text-transform: none;
+
+  z-index: 2;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ─── Map + info row ───────────────────────────────────────────────────── */
+
+.bibi-contacts__row {
+  /* Figma: pin tip touches photo top (visual gap ≈ 22px in 1226-px render
+     i.e. ≈ 35px at 1920). Use small positive margin so the row sits
+     just below the pin tip, not glued to it. */
+  margin-top: clamp(20px, 1.8vw, 35px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(24px, 3.95vw, 76px);
+}
+
+/* Photo — fixed width per Figma (570×381), no flex grow so row stays centered */
+.bibi-contacts__photo {
+  flex: 0 1 auto;
+  margin: 0;
+  width: clamp(360px, 36vw, 570px);
+  aspect-ratio: 570 / 381;
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+}
+.bibi-contacts__photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Info column — fixed Figma width (564px), no flex grow */
+.bibi-contacts__info {
+  flex: 0 1 auto;
+  width: clamp(360px, 36vw, 564px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(28px, 2.08vw, 40px);
+  padding-top: clamp(0px, 0.1vw, 1px);
+}
+
+.bibi-contacts__info-block {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 1.25vw, 24px);
+}
+
+.bibi-contacts__label {
+  font-size: clamp(12px, 0.73vw, 14px);
+  font-weight: 500;
+  color: var(--bibi-white);
+  text-transform: capitalize;
+  line-height: 0.999;
+  letter-spacing: 0;
+}
+
+.bibi-contacts__addr {
+  margin: 0;
+  font-size: clamp(16px, 1.25vw, 24px);
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--bibi-yellow);
+  text-transform: capitalize;
+  letter-spacing: 0;
+}
+
+.bibi-contacts__hours {
+  font-size: clamp(13px, 0.94vw, 18px);
+  color: var(--bibi-text-mute-2);
+  line-height: 0.999;
+  letter-spacing: 0;
+}
+
+.bibi-contacts__phones {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.bibi-contacts__phones a {
+  font-size: clamp(16px, 1.25vw, 24px);
+  font-weight: 500;
+  color: var(--bibi-yellow);
+  text-decoration: none;
+  text-transform: capitalize;
+  white-space: nowrap;
+  letter-spacing: 0;
+  line-height: 1.25;
+  transition: opacity .15s ease;
+}
+.bibi-contacts__phones a:hover { opacity: .85; }
+
+.bibi-contacts__email {
+  font-size: clamp(16px, 1.25vw, 24px);
+  font-weight: 500;
+  color: var(--bibi-yellow);
+  text-decoration: none;
+  text-transform: lowercase;
+  letter-spacing: 0;
+  line-height: 1.25;
+  word-break: break-all;
+  transition: opacity .15s ease;
+}
+.bibi-contacts__email:hover { opacity: .85; }
+
+/* =============================================================================
+ *  RESPONSIVE
+ * ========================================================================== */
+
+/* Tablet */
+@media (max-width: 1023px) {
+  .bibi-contacts {
+    padding: 30px 0 80px;
+  }
+  .bibi-contacts__pin-block {
+    margin: clamp(-40px, -2vw, -10px) 0 clamp(20px, 4vw, 50px);
+  }
+  .bibi-contacts__pin-inner {
+    width: min(440px, 60vw);
+  }
+  .bibi-contacts__tagline {
+    /* Keep proportional 78.82% width, font scales to 6.85% of pin */
+    font-size: clamp(20px, 4.16vw, 30px);
+  }
+  .bibi-contacts__row {
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .bibi-contacts-hero {
+    padding: 24px 16px 0;
+    text-align: center;
+  }
+  .bibi-contacts-hero .bibi-breadcrumb {
+    text-align: left;
+    font-size: 13px;
+  }
+  .bibi-contacts-hero .bibi-hero__title {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 36px;
+  }
+
+  .bibi-contacts {
+    padding: 24px 16px 56px;
+  }
+  /* Pin block — centered, smaller per mobile design */
+  .bibi-contacts__pin-block {
+    margin: 8px 0 12px;
+  }
+  .bibi-contacts__pin-inner {
+    width: min(280px, 78vw);
+  }
+  .bibi-contacts__tagline {
+    font-size: clamp(18px, 5.6vw, 22px);
+    line-height: 1.05;
+  }
+
+  /* Map + info: stacked, full-width, info centered */
+  .bibi-contacts__row {
+    margin-top: 20px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 28px;
+  }
+  .bibi-contacts__photo {
+    width: 100%;
+    max-width: none;
+    aspect-ratio: 328 / 220;
+    border-radius: 8px;
+  }
+  .bibi-contacts__info {
+    width: 100%;
+    max-width: none;
+    text-align: left;
+    align-items: flex-start;
+    gap: 24px;
+    padding: 0;
+  }
+  .bibi-contacts__info-block {
+    align-items: flex-start;
+    text-align: left;
+    gap: 10px;
+  }
+  .bibi-contacts__label {
+    font-size: 13px;
+    color: var(--bibi-white);
+  }
+  .bibi-contacts__addr {
+    font-size: 18px;
+    line-height: 1.25;
+  }
+  .bibi-contacts__hours {
+    font-size: 14px;
+  }
+  .bibi-contacts__phones {
+    align-items: flex-start;
+  }
+  .bibi-contacts__phones a,
+  .bibi-contacts__email {
+    font-size: 18px;
+    line-height: 1.25;
+  }
+}
+
+@media (max-width: 480px) {
+  .bibi-contacts__pin-inner { width: min(240px, 80vw); }
+  .bibi-contacts__tagline {
+    font-size: clamp(16px, 5.2vw, 20px);
+  }
+  .bibi-contacts-hero .bibi-hero__title { font-size: 32px; }
+  .bibi-contacts__photo { aspect-ratio: 328 / 200; }
+}
