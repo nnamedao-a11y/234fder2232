@@ -17,7 +17,9 @@ import {
   Scales, IdentificationCard, Coins, FileText,
   CheckCircle, Warning, ArrowsClockwise, FloppyDisk,
   ShieldCheck, Fire, UploadSimple, ArrowRight, Info,
-  Trophy, X as IconX
+  Trophy, X as IconX,
+  Wallet, Bank, Money, Lock, LockOpen, Plus, Receipt,
+  CurrencyEur, CheckSquare, XCircle, ListChecks
 } from '@phosphor-icons/react';
 
 // ──────────────────────── STATIC HELPERS ─────────────────────────
@@ -118,6 +120,7 @@ export default function LegalWorkflowPage() {
     { id: 'deal_pipeline',  label: 'Deal Pipeline (P0.2)',  icon: ArrowsClockwise },
     { id: 'deposit_v2',     label: 'Deposit v2 (P0.3)',     icon: Coins },
     { id: 'contract_v2',    label: 'Contract v2 (P0.4)',    icon: FileText },
+    { id: 'financials',     label: 'Financials & Payments (P1.2)', icon: Wallet },
   ];
 
   return (
@@ -186,6 +189,12 @@ export default function LegalWorkflowPage() {
             customers={customers}
             deals={deals}
             catalog={catalog}
+          />
+        )}
+        {tab === 'financials' && (
+          <FinancialsTab
+            customers={customers}
+            deals={deals}
           />
         )}
       </div>
@@ -1592,3 +1601,617 @@ function ContractsListForDeal({ dealId, catalog, refreshKey }) {
     </div>
   );
 }
+
+// ════════════════════════════════════════════════════════════════════════
+//   P1.2  FINANCIALS  &  PAYMENTS  TAB
+// ════════════════════════════════════════════════════════════════════════
+
+const PAYMENT_METHOD_LABELS = {
+  bank: { label: 'Bank', tint: 'bg-[#DBEAFE] text-[#1D4ED8]' },
+  stripe: { label: 'Stripe', tint: 'bg-[#E0E7FF] text-[#4F46E5]' },
+  cash_off_books: { label: 'Cash 🔴', tint: 'bg-[#FEE2E2] text-[#DC2626]' },
+  internal: { label: 'Internal', tint: 'bg-[#F4F4F5] text-[#71717A]' },
+  other: { label: 'Other', tint: 'bg-[#FEF3C7] text-[#D97706]' },
+};
+
+const PAYMENT_STATUS_TINT = {
+  pending: 'bg-[#FEF3C7] text-[#D97706]',
+  confirmed: 'bg-[#D1FAE5] text-[#059669]',
+  voided: 'bg-[#F4F4F5] text-[#71717A] line-through',
+};
+
+const DEAL_PAYMENT_STATUS_TINT = {
+  unpaid: 'bg-[#FEE2E2] text-[#DC2626]',
+  partial: 'bg-[#FEF3C7] text-[#D97706]',
+  paid: 'bg-[#D1FAE5] text-[#059669]',
+  overpaid: 'bg-[#DBEAFE] text-[#1D4ED8]',
+};
+
+function fmt(n) {
+  if (n === null || n === undefined) return '—';
+  const v = Number(n);
+  return `€${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function FinancialsTab({ customers, deals }) {
+  const [dealId, setDealId] = useState('');
+  const [refreshTick, setRefreshTick] = useState(0);
+  const triggerRefresh = () => setRefreshTick(t => t + 1);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="section-card lg:col-span-1">
+        <div className="section-title-clean">
+          <ListChecks size={22} weight="duotone" className="text-[#4F46E5]" />
+          <span>Сделка</span>
+        </div>
+        <select
+          value={dealId}
+          onChange={(e) => setDealId(e.target.value)}
+          data-testid="fin-deal-select"
+          className="input w-full"
+        >
+          <option value="">— выбрать сделку —</option>
+          {deals.map(d => (
+            <option key={d.id} value={d.id}>
+              {(d.title || d.vin || d.id)} · {STAGE_LABELS[d.stage] || d.stage || ''}
+            </option>
+          ))}
+        </select>
+        <div className="text-xs text-[#71717A] mt-3 bg-[#F9FAFB] rounded-lg p-3 flex gap-2">
+          <Info size={16} className="flex-shrink-0 mt-0.5" />
+          <div>
+            Здесь видно весь финансовый поток сделки: что должны заплатить
+            (breakdown) и что уже пришло (payments). Поля
+            <b> cash_off_books </b>помечены красным — это «серые» деньги.
+          </div>
+        </div>
+      </div>
+
+      <div className="lg:col-span-2 space-y-6">
+        {!dealId ? (
+          <div className="section-card text-sm text-[#71717A] text-center py-12">
+            Выберите сделку слева чтобы увидеть breakdown и платежи.
+          </div>
+        ) : (
+          <>
+            <BreakdownPanel
+              dealId={dealId}
+              refreshTick={refreshTick}
+              onRefresh={triggerRefresh}
+            />
+            <PaymentsPanel
+              dealId={dealId}
+              refreshTick={refreshTick}
+              onRefresh={triggerRefresh}
+            />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function BreakdownPanel({ dealId, refreshTick, onRefresh }) {
+  const [items, setItems] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewData, setPreviewData] = useState(null);
+
+  const reload = useCallback(async () => {
+    if (!dealId) return;
+    setLoading(true);
+    try {
+      const r = await axios.get(`${API_URL}/api/legal/deals/${dealId}/financials`);
+      setItems(r.data?.data || []);
+      setSummary(r.data?.summary || null);
+    } catch (e) {
+      console.error(e);
+      toast.error(e?.response?.data?.detail || 'Не удалось загрузить breakdown');
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [dealId]);
+
+  useEffect(() => { reload(); }, [reload, refreshTick]);
+
+  const previewFinal = async () => {
+    try {
+      const tplR = await axios.get(`${API_URL}/api/admin/invoice-templates?kind=final&active=true`);
+      const tpl = (tplR.data?.data || [])[0];
+      if (!tpl) throw new Error('Нет активного template для kind=final');
+      const aw = items.find(i => i.kind === 'after_win');
+      const ctx = {};
+      if (aw?.auction?.price_eur) ctx.vehicle_price_eur = aw.auction.price_eur;
+      const r = await axios.post(
+        `${API_URL}/api/admin/invoice-templates/${tpl.id}/preview`,
+        { context: ctx, overrides: {} },
+      );
+      setPreviewData(r.data?.preview);
+      setPreviewOpen(true);
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || e.message || 'Preview failed');
+    }
+  };
+
+  const generateFinal = async () => {
+    setGenerating(true);
+    try {
+      const r = await axios.post(
+        `${API_URL}/api/legal/deals/${dealId}/final-breakdown`,
+        { context: {}, overrides: {} },
+      );
+      if (r.data?.idempotent) {
+        toast.info('Final breakdown уже существует');
+      } else {
+        toast.success('Final breakdown создан');
+      }
+      setPreviewOpen(false);
+      onRefresh();
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || 'Generate failed');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <div className="section-card">
+      <div className="flex items-start justify-between mb-4">
+        <div className="section-title-clean !mb-0">
+          <Receipt size={22} weight="duotone" className="text-[#4F46E5]" />
+          <span>Financial Breakdown</span>
+        </div>
+        {summary?.final?.exists ? (
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#F4F4F5] text-[#18181B] flex items-center gap-1">
+            <Lock size={14} weight="bold" /> Final locked
+          </span>
+        ) : (
+          <button
+            onClick={previewFinal}
+            data-testid="fin-preview-final"
+            className="btn-primary !px-3 !py-2 !text-xs"
+          >
+            <Plus size={14} weight="bold" /> Generate Final Costs
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-[#71717A]">Загрузка…</p>
+      ) : items.length === 0 ? (
+        <p className="text-sm text-[#71717A]">
+          Breakdown'ов ещё нет. После <b>auction_won</b> будет создан after-win
+          breakdown автоматически. Final — кнопкой выше.
+        </p>
+      ) : (
+        <div className="space-y-4">
+          {items.map(b => (
+            <BreakdownCard key={b.id} bd={b} />
+          ))}
+        </div>
+      )}
+
+      {previewOpen && previewData && (
+        <PreviewModal
+          data={previewData}
+          onCancel={() => setPreviewOpen(false)}
+          onConfirm={generateFinal}
+          confirming={generating}
+        />
+      )}
+    </div>
+  );
+}
+
+function BreakdownCard({ bd }) {
+  const totals = bd.totals || {};
+  const items = bd.items || [];
+  return (
+    <div className="border border-[#E4E4E7] rounded-xl overflow-hidden"
+         data-testid={`breakdown-card-${bd.id}`}>
+      <div className="bg-[#F9FAFB] px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-[#18181B] uppercase tracking-wide text-sm">
+            {bd.kind === 'final' ? '🟣 Final' : '🟦 After-Win'}
+          </span>
+          <span className="font-mono text-xs text-[#71717A]">#{(bd.id || '').slice(-10)}</span>
+          {bd.locked && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F4F4F5] text-[#18181B] flex items-center gap-1">
+              <Lock size={10} weight="bold" /> LOCKED
+            </span>
+          )}
+        </div>
+        <div className="text-xs text-[#71717A]">
+          {bd.created_at && new Date(bd.created_at).toLocaleString()}
+          {bd.fx_rate_snapshot && (
+            <span className="ml-2 font-mono">FX {bd.fx_rate_snapshot}</span>
+          )}
+        </div>
+      </div>
+
+      <div className="px-4 py-3">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-[#71717A] text-xs uppercase tracking-wide">
+              <th className="text-left py-2 font-medium">Item</th>
+              <th className="text-right py-2 font-medium">Amount</th>
+              <th className="text-center py-2 font-medium">Method</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((it, idx) => {
+              const meth = PAYMENT_METHOD_LABELS[it.payment_type] || PAYMENT_METHOD_LABELS.other;
+              const isCash = it.payment_type === 'cash_off_books';
+              const isNeg = Number(it.amount) < 0;
+              return (
+                <tr key={idx} className={`border-t border-[#F4F4F5] ${isCash ? 'bg-[#FEF2F2]/40' : ''}`}>
+                  <td className="py-2 text-[#18181B]">{it.label || it.name || it.key}</td>
+                  <td className={`py-2 text-right font-mono font-semibold ${
+                    isNeg ? 'text-[#059669]' : isCash ? 'text-[#DC2626]' : 'text-[#18181B]'
+                  }`}>{fmt(it.amount)}</td>
+                  <td className="py-2 text-center">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${meth.tint}`}>
+                      {meth.label}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="px-4 py-3 bg-[#F9FAFB] grid grid-cols-3 gap-3 text-sm">
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-[#71717A] font-medium">Total</div>
+          <div className="font-mono font-bold text-[#18181B]">
+            {fmt(totals.total_all ?? bd.amount)}
+          </div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-[#059669] font-medium">Official</div>
+          <div className="font-mono font-bold text-[#059669]">{fmt(totals.total_official)}</div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-[#DC2626] font-medium">Cash 🔴</div>
+          <div className="font-mono font-bold text-[#DC2626]">{fmt(totals.total_cash)}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PreviewModal({ data, onCancel, onConfirm, confirming }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-auto"
+           data-testid="fin-preview-modal">
+        <div className="px-6 py-4 border-b border-[#E4E4E7] flex items-center justify-between">
+          <h3 className="text-lg font-bold text-[#18181B]">Preview — Final Breakdown</h3>
+          <button onClick={onCancel} className="p-1 hover:bg-[#F4F4F5] rounded">
+            <IconX size={18} />
+          </button>
+        </div>
+        <div className="p-6">
+          <BreakdownCard bd={{
+            id: 'preview', kind: 'final', locked: false,
+            items: data.items, totals: data.totals,
+            created_at: new Date().toISOString(),
+          }} />
+          <p className="text-xs text-[#71717A] mt-3 italic">
+            Это предварительный расчёт. После подтверждения breakdown будет
+            записан в БД с <b>locked=true</b> и больше изменить его нельзя.
+          </p>
+        </div>
+        <div className="px-6 py-4 border-t border-[#E4E4E7] flex justify-end gap-2">
+          <button onClick={onCancel} className="btn-secondary" data-testid="fin-preview-cancel">Cancel</button>
+          <button onClick={onConfirm} disabled={confirming}
+                  className="btn-primary" data-testid="fin-preview-confirm">
+            {confirming ? 'Saving…' : 'Confirm & Create'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PaymentsPanel({ dealId, refreshTick, onRefresh }) {
+  const [payments, setPayments] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState('unpaid');
+  const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+
+  const reload = useCallback(async () => {
+    if (!dealId) return;
+    setLoading(true);
+    try {
+      const r = await axios.get(`${API_URL}/api/legal/deals/${dealId}/payments`);
+      setPayments(r.data?.payments || []);
+      setSummary(r.data?.summary || null);
+      setPaymentStatus(r.data?.payment_status || 'unpaid');
+    } catch (e) {
+      console.error(e);
+      setPayments([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [dealId]);
+
+  useEffect(() => { reload(); }, [reload, refreshTick]);
+
+  const confirmPayment = async (id) => {
+    try {
+      await axios.post(`${API_URL}/api/legal/payments/${id}/confirm`, {});
+      toast.success('Payment confirmed');
+      onRefresh();
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || 'Confirm failed');
+    }
+  };
+
+  const voidPayment = async (id) => {
+    const reason = window.prompt('Причина void платежа?', '');
+    if (!reason || reason.length < 2) return;
+    try {
+      await axios.post(`${API_URL}/api/legal/payments/${id}/void`, { reason });
+      toast.success('Payment voided');
+      onRefresh();
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || 'Void failed (admin only)');
+    }
+  };
+
+  const totalAll = summary?.total_all || 0;
+  const paidTotal = summary?.paid_total || 0;
+  const remaining = summary?.remaining || 0;
+  const progress = totalAll > 0 ? Math.min(100, (paidTotal / totalAll) * 100) : 0;
+  const statusTint = DEAL_PAYMENT_STATUS_TINT[paymentStatus] || DEAL_PAYMENT_STATUS_TINT.unpaid;
+
+  return (
+    <div className="section-card">
+      <div className="flex items-start justify-between mb-4">
+        <div className="section-title-clean !mb-0">
+          <Wallet size={22} weight="duotone" className="text-[#059669]" />
+          <span>Payments</span>
+          <span className={`ml-2 px-3 py-1 rounded-full text-xs font-semibold uppercase ${statusTint}`}
+                data-testid="fin-payment-status">
+            {paymentStatus}
+          </span>
+        </div>
+        <button onClick={() => setShowAdd(true)}
+                data-testid="fin-add-payment"
+                className="btn-primary !px-3 !py-2 !text-xs">
+          <Plus size={14} weight="bold" /> Add Payment
+        </button>
+      </div>
+
+      <div className="bg-[#F9FAFB] rounded-xl p-4 mb-4 grid grid-cols-3 gap-3 text-sm">
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-[#71717A] font-medium">To pay</div>
+          <div className="font-mono font-bold text-[#18181B]">{fmt(totalAll)}</div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-[#059669] font-medium">Paid</div>
+          <div className="font-mono font-bold text-[#059669]" data-testid="fin-paid-total">{fmt(paidTotal)}</div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-[#71717A] font-medium">Remaining</div>
+          <div className={`font-mono font-bold ${
+            remaining < 0 ? 'text-[#1D4ED8]' : remaining === 0 ? 'text-[#059669]' : 'text-[#DC2626]'
+          }`}>{fmt(remaining)}</div>
+        </div>
+        <div className="col-span-3">
+          <div className="h-2 bg-[#E4E4E7] rounded-full overflow-hidden">
+            <div className={`h-full transition-all ${
+              paymentStatus === 'paid' ? 'bg-[#059669]'
+              : paymentStatus === 'overpaid' ? 'bg-[#1D4ED8]'
+              : paymentStatus === 'partial' ? 'bg-[#D97706]'
+              : 'bg-[#71717A]'
+            }`} style={{ width: `${progress}%` }} />
+          </div>
+        </div>
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-[#71717A]">Загрузка…</p>
+      ) : payments.length === 0 ? (
+        <p className="text-sm text-[#71717A]">Платежей ещё нет.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-[#71717A] text-xs uppercase tracking-wide border-b border-[#E4E4E7]">
+                <th className="text-left py-2 px-2 font-medium">Date</th>
+                <th className="text-right py-2 px-2 font-medium">Amount</th>
+                <th className="text-center py-2 px-2 font-medium">Method</th>
+                <th className="text-center py-2 px-2 font-medium">Status</th>
+                <th className="text-center py-2 px-2 font-medium">Proof</th>
+                <th className="text-right py-2 px-2 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {payments.map(p => {
+                const meth = PAYMENT_METHOD_LABELS[p.method] || PAYMENT_METHOD_LABELS.other;
+                const stTint = PAYMENT_STATUS_TINT[p.status] || '';
+                const isCash = p.method === 'cash_off_books';
+                return (
+                  <tr key={p.id}
+                      className={`border-b border-[#F4F4F5] ${isCash ? 'bg-[#FEF2F2]/40' : ''} ${
+                        p.status === 'voided' ? 'opacity-50' : ''
+                      }`}
+                      data-testid={`payment-row-${p.id}`}>
+                    <td className="py-2 px-2 text-xs text-[#71717A]">
+                      {new Date(p.created_at).toLocaleString()}
+                    </td>
+                    <td className={`py-2 px-2 text-right font-mono font-semibold ${
+                      isCash ? 'text-[#DC2626]' : 'text-[#18181B]'
+                    }`}>{fmt(p.amount)}</td>
+                    <td className="py-2 px-2 text-center">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${meth.tint}`}>
+                        {meth.label}
+                      </span>
+                    </td>
+                    <td className="py-2 px-2 text-center">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase ${stTint}`}>
+                        {p.status}
+                      </span>
+                    </td>
+                    <td className="py-2 px-2 text-center">
+                      {p.proof_url ? (
+                        <a href={p.proof_url} target="_blank" rel="noreferrer"
+                           className="text-[#4F46E5] underline text-xs">link</a>
+                      ) : <span className="text-[#71717A] text-xs">—</span>}
+                    </td>
+                    <td className="py-2 px-2 text-right">
+                      {p.status === 'pending' && (
+                        <button onClick={() => confirmPayment(p.id)}
+                                data-testid={`fin-confirm-${p.id}`}
+                                className="text-xs px-2.5 py-1 rounded-lg bg-[#059669] text-white font-semibold mr-1">
+                          Confirm
+                        </button>
+                      )}
+                      {p.status !== 'voided' && (
+                        <button onClick={() => voidPayment(p.id)}
+                                data-testid={`fin-void-${p.id}`}
+                                className="text-xs px-2.5 py-1 rounded-lg bg-[#FEE2E2] text-[#DC2626] font-semibold">
+                          Void
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {showAdd && (
+        <AddPaymentModal
+          dealId={dealId}
+          onCancel={() => setShowAdd(false)}
+          onCreated={() => { setShowAdd(false); onRefresh(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function AddPaymentModal({ dealId, onCancel, onCreated }) {
+  const [amount, setAmount] = useState('');
+  const [method, setMethod] = useState('bank');
+  const [proofUrl, setProofUrl] = useState('');
+  const [note, setNote] = useState('');
+  const [autoConfirm, setAutoConfirm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async () => {
+    const amt = Number(amount);
+    if (!amt || amt <= 0) {
+      toast.error('Amount must be > 0');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const r = await axios.post(`${API_URL}/api/legal/deals/${dealId}/payments`, {
+        amount: amt, method, currency: 'EUR',
+        proof_url: proofUrl || null,
+        note: note || null,
+        auto_confirm: autoConfirm,
+      });
+      const warns = r.data?.warnings || [];
+      if (warns.length) {
+        toast.warning(warns.join('; '));
+      } else {
+        toast.success(r.data?.payment?.status === 'confirmed' ? 'Payment confirmed' : 'Payment created (pending)');
+      }
+      onCreated();
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || 'Create failed');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full"
+           data-testid="fin-add-payment-modal">
+        <div className="px-6 py-4 border-b border-[#E4E4E7] flex items-center justify-between">
+          <h3 className="text-lg font-bold text-[#18181B]">Add Payment</h3>
+          <button onClick={onCancel} className="p-1 hover:bg-[#F4F4F5] rounded">
+            <IconX size={18} />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#71717A] mb-2">
+              Amount (EUR) *
+            </label>
+            <input type="number" step="0.01" min="0" value={amount}
+                   onChange={(e) => setAmount(e.target.value)}
+                   data-testid="fin-pay-amount"
+                   className="input w-full" placeholder="0.00" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#71717A] mb-2">
+              Method *
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {['bank', 'stripe', 'cash_off_books'].map(m => {
+                const meta = PAYMENT_METHOD_LABELS[m];
+                return (
+                  <button key={m}
+                          type="button"
+                          onClick={() => setMethod(m)}
+                          data-testid={`fin-method-${m}`}
+                          className={`px-3 py-2 rounded-lg text-xs font-semibold border-2 transition-colors ${
+                            method === m
+                              ? 'border-[#4F46E5] bg-[#E0E7FF] text-[#4F46E5]'
+                              : 'border-[#E4E4E7] bg-white text-[#71717A] hover:border-[#4F46E5]/40'
+                          }`}>
+                    {meta.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#71717A] mb-2">
+              Proof URL {method === 'bank' ? '(recommended)' : '(optional)'}
+            </label>
+            <input value={proofUrl} onChange={(e) => setProofUrl(e.target.value)}
+                   data-testid="fin-pay-proof"
+                   className="input w-full" placeholder="https://…" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#71717A] mb-2">
+              Note
+            </label>
+            <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
+                      className="input w-full resize-none" />
+          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={autoConfirm}
+                   onChange={(e) => setAutoConfirm(e.target.checked)}
+                   data-testid="fin-pay-auto-confirm" />
+            <span className="text-[#18181B]">Auto-confirm (admin only)</span>
+          </label>
+        </div>
+        <div className="px-6 py-4 border-t border-[#E4E4E7] flex justify-end gap-2">
+          <button onClick={onCancel} className="btn-secondary">Cancel</button>
+          <button onClick={submit} disabled={submitting || !amount}
+                  className="btn-primary" data-testid="fin-pay-submit">
+            {submitting ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+

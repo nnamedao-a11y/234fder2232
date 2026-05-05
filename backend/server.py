@@ -1941,6 +1941,14 @@ async def startup():
     except Exception as e:
         logger.warning(f"[STARTUP] financial_breakdown seed failed: {e}")
 
+    # ─── P1.2-payments Payments tracking indexes ───────────────────────
+    try:
+        import payments_tracking as _pt
+        await _pt.ensure_indexes(db)
+        logger.info("[STARTUP] ✓ payments indexes ensured")
+    except Exception as e:
+        logger.warning(f"[STARTUP] payments indexes failed: {e}")
+
 
 async def _seed_staff_from_env():
     """Seed/refresh staff accounts on every startup — deployment-resilient.
@@ -2344,6 +2352,18 @@ try:
                 sum(1 for _ in _fin_br.router.routes))
 except Exception as _e:
     logger.exception("[financial_breakdown] failed to mount router: %s", _e)
+
+# ─────────────────────────────────────────────────────────────────────────
+#  P1.2-payments:  Payments tracking router
+#  (см. payments_tracking.py)
+# ─────────────────────────────────────────────────────────────────────────
+try:
+    import payments_tracking as _pay_tr
+    fastapi_app.include_router(_pay_tr.router)
+    logger.info("[payments_tracking] router mounted: %d routes",
+                sum(1 for _ in _pay_tr.router.routes))
+except Exception as _e:
+    logger.exception("[payments_tracking] failed to mount router: %s", _e)
 
 # ═══════════════════════════════════════════════════════════════════
 # MODELS

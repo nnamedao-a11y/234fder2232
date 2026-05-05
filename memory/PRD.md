@@ -217,3 +217,107 @@ P1.3.1 regression: 34/34 still green.
 - ❌ Frontend "Generate Final Costs" button — endpoint ready, UI in P1.2-UI phase
 - ❌ Excel/PDF export of breakdown — backlog
 
+---
+
+## Phase — P1.2-payments + P1.2-UI (DONE — May 2026)
+
+Goal: закрыть финансовый цикл сделки — учёт реальных платежей + UI для
+менеджеров. Это последний слой над `financial_breakdown` который превращает
+систему из «считает сколько надо» в «контролирует сколько пришло».
+
+### Architectural model
+```
+Backend:                     Frontend:
+─────────                    ────────
+breakdown (immutable)        BreakdownPanel + BreakdownCard
+   ↓                           ↓
+payments (append-only)        PaymentsPanel + PaymentsTable
+   ↓                           ↓
+recompute_status()             auto-refresh + status badge
+   ↓                           ↓
+deal.payment_status           color-coded progress bar
+```
+
+### Backend (payments_tracking.py — ~470 lines)
+**Endpoints:**
+| Method | Path | Roles | Что |
+|---|---|---|---|
+| POST | `/api/legal/deals/{id}/payments` | manager+ | Зарегистрировать платёж (pending или confirmed if `auto_confirm` + admin) |
+| POST | `/api/legal/payments/{id}/confirm` | manager+ | Подтвердить (idempotent) |
+| POST | `/api/legal/payments/{id}/void` | **admin only** | Отменить (НЕ удалить) с причиной |
+| GET | `/api/legal/deals/{id}/payments` | manager+ | List + summary (paid/remaining/status + 3-by-flow split) |
+| GET | `/api/legal/payments/{id}` | manager+ | Get one |
+| POST | `/api/legal/deals/{id}/payments/recompute` | manager+ | Manual recompute (debug) |
+
+**Hard rules:**
+- ✔ Payment immutable after confirm — только void (с reason)
+- ✔ Void не удаляет — `status=voided`, audit trail сохраняется
+- ✔ Idempotent confirm (повтор = 200 + idempotent=True)
+- ✔ Cancelled deal → 409 на create
+- ✔ Bank без proof_url → 200 + warning (не блок)
+- ✔ Cash без proof → 200 без warning (нормально)
+- ✔ Переплата разрешена → status="overpaid" (не отказ)
+- ✔ `is_official` авто-derived: bank/stripe/internal → True; cash → False
+
+**Auto-status (single source of truth):**
+```
+recompute_deal_payment_status(deal_id):
+  paid_total = SUM(amount) WHERE status=confirmed
+  status = unpaid (0) | partial (>0 < total) | paid (>= total) | overpaid (> total)
+  IF first transition to paid AND stage in STAGES_ALLOWING_AUTO_PAID:
+     stage → "in_transit_to_bg"
+     emit event "deal_paid_in_full"
+     audit "deal_paid_in_full"
+```
+
+**Audit events (4 new):**
+- `payment_created`, `payment_confirmed`, `payment_voided`, `deal_paid_in_full`
+
+### Frontend (LegalWorkflowPage.jsx — `FinancialsTab`)
+Новый таб **"Financials & Payments (P1.2)"** содержит:
+
+**Left rail:** селектор сделки (синхронизирован с обоими панелями)
+
+**BreakdownPanel:**
+- Список всех breakdown'ов (after_win + final), сортированы newest-first
+- `BreakdownCard`: цветовая разметка
+  - 🟦 After-Win (header) | 🟣 Final (header)
+  - 🔴 cash_off_books строки — красная подсветка фона
+  - 🟢 negative amounts (rebate, deposit) — зелёный
+  - LOCKED 🔒 badge на immutable breakdown'ах
+  - FX rate snapshot отображается рядом с датой
+- 3 totals в footer карточки: Total / Official / Cash 🔴
+- **«Generate Final Costs»** кнопка → preview modal → confirm
+
+**PaymentsPanel:**
+- Status badge (unpaid/partial/paid/overpaid) — цветовой
+- Прогресс-бар оплаты (зелёный/жёлтый/синий по статусу)
+- 3-card summary: To pay / Paid / Remaining
+- Таблица платежей с:
+  - Method tint (Bank/Stripe/Cash 🔴)
+  - Status badge (pending/confirmed/voided)
+  - Proof link (если есть)
+  - **Confirm** кнопка для pending
+  - **Void** кнопка (admin only, с prompt для reason)
+- **«Add Payment»** modal: amount + method (3 кнопки) + proof + auto-confirm checkbox
+
+### Test coverage
+**P1.2-payments E2E** (`test_payments_e2e.py`) — 7 test groups, **23/23 passed**:
+1. Create pending → confirm flow (paid_total updates)
+2. Paid in full → auto-advance stage to `in_transit_to_bg` + audit `deal_paid_in_full`
+3. Overpaid status (paid > total) — accepted, not rejected
+4. Void confirmed payment → recompute drops paid_total by that amount
+5. Idempotent confirm (replay returns idempotent=True; voided cannot be confirmed → 409)
+6. Cash no proof OK + Bank no proof returns warnings
+7. Cancelled deal blocks new payment → 409
+
+**Regression**: P1.3.1 (34/34) and P1.2 (67/67) STILL all green.
+**System smoke**: ALL CHECKS PASSED.
+
+### NOT built (deliberate)
+- ❌ Customer-facing payment view («Мой счёт»)
+- ❌ Payment proof file upload (currently URL-based; can plug in object storage)
+- ❌ Stripe webhook auto-confirm (hooked-in path is `auto_confirm`, but no hook yet)
+- ❌ Email notifications on payment_confirmed / deal_paid_in_full
+- ❌ PDF export of breakdown
+
