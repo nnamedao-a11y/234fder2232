@@ -1931,6 +1931,16 @@ async def startup():
     except Exception as e:
         logger.warning(f"[STARTUP] audit_events indexes failed: {e}")
 
+    # ─── P1.2 Financial Breakdown templates + indexes ──────────────────
+    try:
+        import financial_breakdown as _fb
+        await _fb.ensure_indexes(db)
+        seed_result = await _fb.seed_default_templates(db)
+        logger.info(f"[STARTUP] ✓ invoice_templates seeded "
+                    f"(created={seed_result['created']}, kept={seed_result['kept']})")
+    except Exception as e:
+        logger.warning(f"[STARTUP] financial_breakdown seed failed: {e}")
+
 
 async def _seed_staff_from_env():
     """Seed/refresh staff accounts on every startup — deployment-resilient.
@@ -2322,6 +2332,18 @@ try:
                 sum(1 for _ in _legal_wf.router.routes))
 except Exception as _e:
     logger.exception("[legal_workflow] failed to mount router: %s", _e)
+
+# ─────────────────────────────────────────────────────────────────────────
+#  P1.2:  Financial Breakdown (templates + engine) router
+#  (см. financial_breakdown.py)
+# ─────────────────────────────────────────────────────────────────────────
+try:
+    import financial_breakdown as _fin_br
+    fastapi_app.include_router(_fin_br.router)
+    logger.info("[financial_breakdown] router mounted: %d routes",
+                sum(1 for _ in _fin_br.router.routes))
+except Exception as _e:
+    logger.exception("[financial_breakdown] failed to mount router: %s", _e)
 
 # ═══════════════════════════════════════════════════════════════════
 # MODELS

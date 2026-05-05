@@ -110,3 +110,110 @@ Goal: дожать архитектуру `auction_won` до production-grade п
 - ❌ Final settlement package (customs + VAT + transport BG + adjustments) — P1.2
 - ❌ Audit UI на фронте — backend готов, фронт в P1.2
 
+---
+
+## Phase — P1.2 Financial Breakdown (DONE — May 2026)
+
+Goal: вынести расчёт денег в БД (templates) и развести 3 типа сумм
+(`total_all` / `total_official` / `total_cash`). Это **не «инвойсы»**, это
+**payment breakdown** — отражение реального cash-flow сделки, включая
+наличные платежи (cash_off_books).
+
+### Architecture invariants
+```
+templates  =  данные (DB)         → как считать
+engine     =  логика (backend)    → считает здесь
+breakdown  =  snapshot (immutable, locked=True) → навсегда
+```
+
+### What was built
+
+**1. `financial_breakdown.py` — новый автономный модуль (~600 строк)**
+- Safe AST formula parser (whitelist: `+ - * / % ** //`, unary, имена из ctx) — **БЕЗ `eval()`**
+- `_compute_items_and_totals()` — engine, накапливает context, считает 3 totals
+- 8 новых endpoints под `/api/admin/invoice-templates/*` и `/api/legal/deals/{id}/...`
+- Seed 2 default templates на startup + indexes
+
+**2. Templates в БД (`invoice_templates`)**
+| ID | kind | items | usage |
+|---|---|---|---|
+| `tpl_after_win_package` | `after_win` | vehicle_price, auction_fee, delivery_to_rotterdam, service_fee, deposit_applied | auto на `auction_won` |
+| `tpl_final_settlement` | `final` | vehicle_price_eur, customs_duty (×0.10), vat (×0.20), bg_transport (cash!), service_fee, adjustments (manual) | manual клик |
+
+**3. Item structure (с разделением денег)**
+```jsonc
+{
+  "key": "bg_transport", "label": "Transport Bulgaria",
+  "type": "input", "default": 700,
+  "payment_type": "cash_off_books",   // bank|stripe|cash_off_books|internal|manual
+  "is_official": false,                // отражает в total_official?
+  "currency": "EUR"
+}
+```
+
+**4. Breakdown document (immutable snapshot)**
+```jsonc
+{
+  "id": "fin-final-...", "kind": "final", "locked": true,
+  "template_id": "tpl_final_settlement",
+  "template_snapshot": { ...full copy... },     // через 2 месяца template
+  "calculation_snapshot": { ...full trace... }, //   изменится → этот не трогаем
+  "items": [...],
+  "totals": { "total_all": 19916, "total_official": 19216, "total_cash": 700 },
+  "fx_rate_snapshot": 0.92
+}
+```
+
+**5. Migration: `mark_auction_won` использует template**
+- Проверяется `tpl_after_win_package` в БД, если есть → engine генерирует items
+- Fallback на legacy `_after_win_package_items()` если template отсутствует
+- Новые поля в invoice: `kind="after_win"`, `template_id`, `template_snapshot`, `calculation_snapshot`, `totals`, `locked=true`
+
+### New endpoints
+| Method | Path | Roles | Что |
+|---|---|---|---|
+| GET    | `/api/admin/invoice-templates`            | admin    | list (filter by kind, active) |
+| GET    | `/api/admin/invoice-templates/{id}`       | admin    | get one |
+| POST   | `/api/admin/invoice-templates`            | admin    | create (validates formula syntax) |
+| PATCH  | `/api/admin/invoice-templates/{id}`       | admin    | update (bumps version if items changed) |
+| DELETE | `/api/admin/invoice-templates/{id}`       | admin    | soft-delete (active=false) |
+| POST   | `/api/admin/invoice-templates/{id}/preview` | manager+ | dry-run engine (no DB writes) |
+| POST   | `/api/legal/deals/{id}/final-breakdown`   | manager+ | сгенерировать final breakdown |
+| GET    | `/api/legal/deals/{id}/financials`        | manager+ | timeline всех breakdown'ов сделки + summary |
+
+### Hard rules (locked semantics)
+- ✔ нельзя изменить breakdown после создания (`locked=True`)
+- ✔ fx_rate_snapshot никогда не пересчитывается (наследие P1.3.1)
+- ✔ template можно soft-delete, но breakdown'ы хранят свой `template_snapshot` навсегда
+- ✔ formula error → 422 (на этапе CREATE template и при preview/generate)
+- ✔ missing required input → 422
+- ✔ negative values разрешены (rebate, deposit_applied = -1000)
+
+### Stage gate (final breakdown)
+Allowed only from: `arrived_rotterdam` | `customs_calculated` | `final_payment_paid` | `in_transit_to_bg` | `delivered`.
+Попытка ранее → HTTP 400.
+
+### Test coverage (E2E POC)
+`/app/backend/test_p12_financial_e2e.py` — 7 test groups, **67/67 passed**:
+1. Safe AST parser — 13 cases (correctness + 6 forbidden constructs + bad syntax + unknown var)
+2. Seed verification — оба default template'а на месте, формулы корректны, cash_off_books флаги правильные
+3. Template CRUD — create/get/preview/patch/version-bump/soft-delete
+4. auction_won writes new P1.2 fields (kind, template_id, snapshots, totals, locked, payment_type)
+5. Final breakdown end-to-end:
+   - stage gate blocks before arrived_rotterdam
+   - customs_duty = 13800 × 0.10 = 1380 ✓
+   - vat = (13800 + 1380) × 0.20 = 3036 ✓
+   - bg_transport=700 in total_cash, total_official excludes it
+   - total_all=19916, total_official=19216, total_cash=700
+   - idempotent replay returns same id
+   - `/financials` listing summary correct
+6. Adjustments override (negative -150) + audit_event recorded
+7. Edge cases: formula syntax error → 422, missing required → 422
+
+P1.3.1 regression: 34/34 still green.
+
+### NOT built (P1.2 scope freeze)
+- ❌ Frontend UI for templates editor — backend ready, UI in P1.2-UI phase
+- ❌ Frontend "Generate Final Costs" button — endpoint ready, UI in P1.2-UI phase
+- ❌ Excel/PDF export of breakdown — backlog
+

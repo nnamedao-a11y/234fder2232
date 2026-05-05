@@ -1571,8 +1571,62 @@ async def mark_auction_won(
     service_fee = (payload.service_fee_eur if payload.service_fee_eur is not None
                    else DEFAULT_SERVICE_FEE_EUR)
 
-    items = _after_win_package_items(price_eur, auction_fee, delivery, service_fee, deposit_eur)
+    # ─── P1.2 — Use invoice_templates if present, fallback to hardcoded ────
+    # Breakdown engine is centralised in financial_breakdown.py; we pull the
+    # active after_win template and plug in per-deal context. If the template
+    # is missing (first-boot, migration gap), we fall back to the legacy
+    # _after_win_package_items() so auction_won never breaks.
+    template_snapshot: Optional[Dict[str, Any]] = None
+    calculation_snapshot: Optional[Dict[str, Any]] = None
+    totals: Dict[str, float] = {}
+    try:
+        import financial_breakdown as _fb
+        tpl = await db.invoice_templates.find_one(
+            {"kind": "after_win", "active": True}, {"_id": 0},
+        )
+        if tpl:
+            ctx = {
+                "vehicle_price": round(price_eur, 2),
+                "vehicle_price_eur": round(price_eur, 2),
+                "auction_fee": round(auction_fee, 2),
+                "delivery_to_rotterdam": round(delivery, 2),
+                "service_fee": round(service_fee, 2),
+                "deposit_applied": -round(deposit_eur, 2) if deposit_eur > 0 else 0.0,
+                "fx_rate_snapshot": fx,
+            }
+            engine_result = _fb._compute_items_and_totals(tpl["items"], ctx, {})
+            items = [
+                {"name": i["label"], "amount": i["amount"], "currency": i["currency"],
+                 "key": i["key"], "payment_type": i["payment_type"],
+                 "is_official": i["is_official"], "type": i["type"]}
+                for i in engine_result["items"]
+            ]
+            totals = engine_result["totals"]
+            template_snapshot = tpl
+            calculation_snapshot = engine_result["calc"]
+        else:
+            items = _after_win_package_items(price_eur, auction_fee, delivery, service_fee, deposit_eur)
+    except Exception as _e:
+        import logging as _lg
+        _lg.getLogger("bibi.legal").warning(
+            "[auction_won] template engine failed, falling back to legacy items: %s", _e,
+        )
+        items = _after_win_package_items(price_eur, auction_fee, delivery, service_fee, deposit_eur)
+
     total_eur = round(sum(i["amount"] for i in items), 2)
+    if not totals:
+        # Legacy path: compute the 3 totals from the plain items list
+        totals = {
+            "total_all": total_eur,
+            "total_official": round(sum(
+                i["amount"] for i in items
+                if i.get("is_official", True)
+            ), 2) if any("is_official" in i for i in items) else total_eur,
+            "total_cash": round(sum(
+                i["amount"] for i in items
+                if i.get("payment_type") == "cash_off_books"
+            ), 2),
+        }
 
     now = _now_iso()
     auction_meta = {
@@ -1721,8 +1775,12 @@ async def mark_auction_won(
             "total": total_eur,
             "currency": "EUR",
             "status": "pending",
-            "kind": "after_win_package",
-            "template": "after_win_package",
+            "kind": "after_win",                          # P1.2 — canonical kind
+            "template": "after_win_package",              # legacy field
+            "template_id": (template_snapshot or {}).get("id") or "tpl_after_win_package",
+            "template_snapshot": template_snapshot,       # P1.2 — immutable copy
+            "calculation_snapshot": calculation_snapshot, # P1.2 — full trace
+            "totals": totals,                             # P1.2 — 3 totals
             "items": items,
             "auction": auction_meta,
             "fx_rate_snapshot": fx,                       # P1.3.1
@@ -1732,6 +1790,7 @@ async def mark_auction_won(
             "sourceAuctionWonDealId": deal_id,
             "auto_created_from": "auction_won",
             "linked_contract_id": contract.get("id"),
+            "locked": True,                               # P1.2 — immutable
             "due_date": None,
             "dueDate": None,
             "created_at": now,
