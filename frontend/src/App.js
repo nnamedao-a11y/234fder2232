@@ -152,6 +152,7 @@ import InvoicesPage from './pages/cabinet/InvoicesPage';
 import ContractsPage from './pages/cabinet/ContractsPage';
 import ShippingPage from './pages/cabinet/ShippingPage';
 import PaymentSuccessPage from './pages/cabinet/PaymentSuccessPage';
+import { CabinetFinancialsListPage, CabinetDealFinancialsPage } from './pages/cabinet/FinancialsPage';
 
 // Manager pages
 import ManagerInvoicesPage from './pages/ManagerInvoicesPage';
@@ -352,6 +353,8 @@ function App() {
             <Route path="/cabinet/invoices" element={<InvoicesPage />} />
             <Route path="/cabinet/contracts" element={<ContractsPage />} />
             <Route path="/cabinet/shipping" element={<ShippingPage />} />
+            <Route path="/cabinet/financials" element={<CabinetFinancialsListPage />} />
+            <Route path="/cabinet/deals/:dealId/financials" element={<CabinetDealFinancialsPage />} />
 
             {/* ====== ADMIN CRM ====== */}
             {/* /admin/login is gone — unified auth lives at /cabinet/login

@@ -2365,6 +2365,18 @@ try:
 except Exception as _e:
     logger.exception("[payments_tracking] failed to mount router: %s", _e)
 
+# ─────────────────────────────────────────────────────────────────────────
+#  P1.2-cabinet:  Customer-facing financial cabinet view
+#  (см. cabinet_financials.py)
+# ─────────────────────────────────────────────────────────────────────────
+try:
+    import cabinet_financials as _cab_fin
+    fastapi_app.include_router(_cab_fin.router)
+    logger.info("[cabinet_financials] router mounted: %d routes",
+                sum(1 for _ in _cab_fin.router.routes))
+except Exception as _e:
+    logger.exception("[cabinet_financials] failed to mount router: %s", _e)
+
 # ═══════════════════════════════════════════════════════════════════
 # MODELS
 # ═══════════════════════════════════════════════════════════════════
